@@ -533,7 +533,7 @@ setInterval(refreshAll,60000);
   var arr=loadA();while(arr.length<4)arr.push({code:"",buy:"",bdate:""});arr=arr.slice(0,4);
   var ncache={}, i;
   function p2(x){return ("0"+x).slice(-2);}
-  function normDate(s){s=String(s||"").trim().replace(/\//g,'-');var m=s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/)||s.match(/^(\d{4})(\d{2})(\d{2})$/);if(!m)return"";return m[1]+"-"+p2(m[2])+"-"+p2(m[3]);}
+  function normDate(s){s=String(s||"").trim().replace(/[年月日]/g,'-').replace(/\//g,'-').replace(/[^\d-]/g,'');var a=s.split('-').filter(function(x){return x.length>0});var y=0,mo=0,d=0,now=new Date().getFullYear();if(a.length>=3){y=+a[0];mo=+a[1];d=+a[2];if(y<100)y+=2000;}else if(a.length===2){mo=+a[0];d=+a[1];y=now;}else{var ds=s.replace(/\D/g,'');if(ds.length===8){y=+ds.slice(0,4);mo=+ds.slice(4,6);d=+ds.slice(6,8);}else if(ds.length===6){y=2000+(+ds.slice(0,2));mo=+ds.slice(2,4);d=+ds.slice(4,6);}else if(ds.length===4){y=now;mo=+ds.slice(0,2);d=+ds.slice(2,4);}else return "";}if(!mo||!d||mo>12||d>31)return "";return y+"-"+("0"+mo).slice(-2)+"-"+("0"+d).slice(-2);}
   function fetchKline(c6,cb){ /* 东财日K 前复权 */
     var sid=secid(c6); if(!sid){cb(null);return;}
     fetch("https://push2his.eastmoney.com/api/qt/stock/kline/get?secid="+sid+"&fields1=f1,f2,f3,f4,f5,f6&fields2=f51,f52,f53,f54,f55,f56,f57&klt=101&fqt=1&beg=0&end=20500101&lmt=600")
