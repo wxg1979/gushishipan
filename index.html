@@ -96,6 +96,24 @@ tbody tr:nth-child(even){background:rgba(255,255,255,.02)}
     <div class="mkt" id="mkt"><div class="mk" style="grid-column:1/-1;color:var(--sub)">加载中…</div></div>
   </div>
 
+  <!-- ①.5 我的持仓·卖出纪律参考 -->
+  <div class="card">
+    <h2>我的持仓 <span class="tag">手动输入·本机保存</span></h2>
+    <div class="tbl-scroll">
+      <table class="pos-tbl">
+        <thead>
+          <tr><th>#</th><th>代码</th><th>买入价</th><th>名称</th><th>1/3止盈</th><th>回撤止盈</th><th>止损</th><th>现价/盈亏</th></tr>
+        </thead>
+        <tbody id="posBody"></tbody>
+      </table>
+    </div>
+    <div style="font-size:11px;color:var(--sub);margin-top:6px;line-height:1.6">
+      每行填<b>股票代码</b>+<b>买入价</b>→自动算价并显示名称。<br>
+      1/3止盈=买入价×1.05(卖1/3)；回撤止盈=止盈后最高回撤10%；止损=买入价×0.95(清仓)。<br>
+      数据存本机(localStorage)，当天刷新不丢，次日开盘前自动清空重填。<b>仅供研究参考，不构成投资建议。</b>
+    </div>
+  </div>
+
   <!-- ② 今日已发送股票 -->
   <div class="card">
     <h2>今日已发送股票 <span class="tag">实时推送·放量</span></h2>
@@ -471,6 +489,71 @@ async function refreshAll(){
 }
 refreshAll();
 setInterval(refreshAll,60000);
+
+/* ============ 我的持仓·卖出纪律参考(localStorage持久化,当日刷新不丢,次日自动清零) ============ */
+(function(){
+  function pd(){var d=new Date();return d.getFullYear()+"-"+("0"+(d.getMonth()+1)).slice(-2)+"-"+("0"+d.getDate()).slice(-2);}
+  var KEY="pos_"+pd();                       // KEY含日期→次日自动读取空,自然清零
+  function loadA(){try{var s=localStorage.getItem(KEY);return s?JSON.parse(s)||[]:[];}catch(e){return[];}}
+  function saveA(a){try{localStorage.setItem(KEY,JSON.stringify(a));}catch(e){}}
+  function esc(s){return String(s==null?"":s).replace(/[&<>"']/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];});}
+  function fmt(x){return (x!=null&&isFinite(x))?((x<0?"-":"")+"¥"+Math.abs(x).toFixed(2)):"--";}
+  function qsym(c){c=String(c).trim();if(/^[69]/.test(c))return"sh"+c;if(/^[03]/.test(c))return"sz"+c;if(/^[48]/.test(c))return"bj"+c;return null;}
+
+  var body=document.getElementById("posBody");if(!body)return;
+  var arr=loadA();while(arr.length<4)arr.push({code:"",buy:""});arr=arr.slice(0,4);
+  var ncache={}, i;
+  function qname(c6,cb){
+    var sym=qsym(c6); if(!sym){cb(null,null);return;}
+    if(ncache[sym]){cb(ncache[sym].n,ncache[sym].p);return;}
+    var s=document.createElement("script");
+    s.src="https://qt.gtimg.cn/q="+sym;
+    s.onload=function(){try{var f=window["v_"+sym];if(f){var a=f.split("~");ncache[sym]={n:a[1],p:(parseFloat(a[3])||null)};cb(ncache[sym].n,ncache[sym].p);}else cb(null,null);}catch(e){cb(null,null);}};
+    s.onerror=function(){cb(null,null);};
+    document.head.appendChild(s);
+  }
+  function upd(i){
+    var buy=parseFloat(arr[i].buy), code=String(arr[i].code||"").trim();
+    var t3=document.querySelector('.pos-tbl .pos-tp3[data-i="'+i+'"]'),
+        mt=document.querySelector('.pos-tbl .pos-mt[data-i="'+i+'"]'),
+        st=document.querySelector('.pos-tbl .pos-stop[data-i="'+i+'"]'),
+        ne=document.querySelector('.pos-tbl .pos-n[data-i="'+i+'"]'),
+        pe=document.querySelector('.pos-tbl .pos-pl[data-i="'+i+'"]');
+    if(buy>0){
+      t3.textContent=fmt(buy*1.05);          // +5% 卖1/3
+      mt.textContent=fmt(buy*1.05*0.90);     // 止盈后高点回撤10%清仓参考
+      st.textContent=fmt(buy*0.95);          // -5% 止损
+    }else{t3.textContent=mt.textContent=st.textContent="--";}
+    if(pe)pe.textContent="--";
+    if(code){
+      qname(code,function(nm,px){
+        if(ne)ne.textContent=nm||code;
+        if(pe&&px){
+          if(buy>0){var r=(px-buy)/buy*100;pe.textContent=fmt(px)+" ("+(r>=0?"+":"")+r.toFixed(1)+"%)";pe.style.color=r>=0?"var(--red)":"var(--green)";}
+          else pe.textContent=fmt(px);
+        }
+      });
+    }else if(ne){ne.textContent="--";}
+  }
+  for(i=0;i<4;i++){
+    var q=document.createElement("tr");
+    q.innerHTML='<td>'+(i+1)+'</td>'
+      +'<td><input class="pos-in" data-i="'+i+'" data-k="code" value="'+esc(arr[i].code)+'" placeholder="代码" style="width:72px;padding:3px"></td>'
+      +'<td><input class="pos-in" data-i="'+i+'" data-k="buy" value="'+esc(arr[i].buy)+'" placeholder="买入价" style="width:70px;padding:3px"></td>'
+      +'<td class="pos-n" data-i="'+i+'">--</td>'
+      +'<td class="pos-tp3" data-i="'+i+'">--</td>'
+      +'<td class="pos-mt" data-i="'+i+'">--</td>'
+      +'<td class="pos-stop" data-i="'+i+'">--</td>'
+      +'<td class="pos-pl" data-i="'+i+'">--</td>';
+    body.appendChild(q);
+  }
+  document.addEventListener("input",function(e){
+    var t=e.target;if(t.classList&&t.classList.contains("pos-in")){
+      var k=+t.dataset.i;arr[k][t.dataset.k]=t.value;saveA(arr);upd(k);
+    }
+  });
+  for(i=0;i<4;i++)upd(i);
+})();
 </script>
 </body>
 </html>
