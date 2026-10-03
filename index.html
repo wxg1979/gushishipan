@@ -314,15 +314,16 @@ function renderVerdict(list){
   $("verdict").innerHTML=v1+v2+v3;
 }
 
-/* ============ ④ 量化Top3动态分时（东财 → 失败腾讯） ============ */
-var TOP3=(QPOOL||[]).filter(function(x){var p=x.p;return p&&p>=15&&p<=60}).slice(0,3);
+/* ============ ④ 量化Top3动态分时（先到先得+动态替换） ============ */
+var QTOP3 = [];   /* gen_dashboard 注入: 当日Top3快照(兜底) */
+var TOP3=(QTOP3&&QTOP3.length)?QTOP3:[];
 function tqcode(code){return /^6/.test(code)?"sh"+code:(/^[034]/.test(code)?"sz"+code:("bj"+code));}
 function secid(code){return /^6/.test(code)?"1."+code:"0."+code;}
 async function loadTrend(code,canvasId,statId){
   var st=document.getElementById(statId);if(st)st.innerHTML='<span style="color:var(--sub)">分时加载中…</span>';
-  var qitem=null;QPOOL.forEach(function(x){if(x.c===code)qitem=x});
+  var qitem=null;TOP3.forEach(function(x){if(x.c===code)qitem=x});
   var score=qitem?qitem.s:0;
-  var bp=qitem?qitem.bp:null;
+  var bp=qitem?{push:qitem.push,vwap:qitem.vwap,buy_hi:qitem.bph,buy_lo:qitem.bpl}:null;
   var url="https://push2his.eastmoney.com/api/qt/stock/trends2/get?secid="+secid(code)+"&fields1=f1,f2,f3,f4,f5,f6,f7,f8,f9,f10,f11,f12,f13&fields2=f51,f52,f53,f54,f55,f56,f57,f58&ndays=1&iscr=0";
   var d=await jp(url);
   if(d&&d.data&&d.data.trends){
@@ -465,12 +466,39 @@ function renderSent(){
       }).join("")
     : '<tr><td colspan="3" style="color:var(--sub)">今日暂无已发送的推送信号</td></tr>';
 }
+async function refreshTop3Cloud(){
+  /* 盘中60s轮询 GitHub raw top3.json(daemon先到先得+动态替换实时维护) */
+  try{
+    var r=await fetch("https://raw.githubusercontent.com/wxg1979/gushishipan/main/top3.json?t="+Date.now());
+    var j=await r.json();
+    if(Array.isArray(j)&&j.length){TOP3=j;renderTops();}
+  }catch(e){}
+}
 function renderTops(){
+  if(!TOP3||!TOP3.length){
+    $("tops").innerHTML='<div style="color:var(--sub);padding:14px 4px;font-size:13px">暂无Top3入选 · 有达标候选即显示(评分≥0.5 + 排除科创/ST/次新/涨跌停/一字板)</div>';return;
+  }
   $("tops").innerHTML=TOP3.map(function(s,i){
-    return '<div class="chip"><div class="hd"><span class="nm2">'+(i+1)+'. '+s.n+' <span class="sc">'+s.c+' · '+s.sec+'</span></span>'+
-      '<span class="sc">评分 '+s.s+' '+trendBadge(s.t)+'</span></div><canvas id="cv'+s.c+'"></canvas><div id="st'+s.c+'" style="margin-top:8px"></div></div>';
+    if(!s)return '';
+    var st=s.st||'高位';
+    var stColor=st==='可买'?'var(--red)':(st==='等回踩'?'var(--accent)':'#7b8aa0');
+    var g=Math.round(s.g*10)/10;
+    var gColor=(g>0)?'var(--red)':(g<0?'var(--green)':'var(--sub)');
+    var hasBp=s.bph!=null&&s.bph!=undefined;
+    var bpHtml=hasBp?('低吸 '+s.bpl+'~'+s.bph+' · VWAP '+s.vwap)
+        :'买点待放量确认(推送价回撤0.5%~1.1%)';
+    return '<div class="chip">'+
+      '<div class="hd"><span class="nm2">'+(i+1)+'. '+s.n+' <span class="sc">'+s.c+' · '+(s.sec||'—')+'</span></span></div>'+
+      '<div style="margin-top:6px;font-size:12px">评分 <b>'+s.s+'</b>'
+        +' · <span style="color:'+gColor+'" class="'+((g>0)?'up':'down')+'">'+(g>0?'+':'')+g+'%</span>'
+        +' · 现价 ¥'+s.p
+        +' · <span style="color:'+stColor+'">'+st+'</span>'
+        +' · 仓位 <b>'+s.pos+'</b></div>'+
+      '<div style="margin-top:4px;font-size:12px;color:#7b8aa0">目标 ¥'+(s.target!=null?s.target:'—')+' · 止损 ¥'+(s.stop!=null?s.stop:'—')+'</div>'+
+      '<div style="margin-top:2px;font-size:11px;color:#7b8aa0">'+bpHtml+'</div>'+
+      '<canvas id="cv'+s.c+'"></canvas><div id="st'+s.c+'" style="margin-top:8px"></div></div>';
   }).join("");
-  TOP3.forEach(function(s){loadTrend(s.c,"cv"+s.c,"st"+s.c)});
+  TOP3.forEach(function(s){if(s)loadTrend(s.c,"cv"+s.c,"st"+s.c)});
 }
 
 /* ============ 主循环 ============ */
@@ -486,6 +514,7 @@ async function refreshAll(){
   loadMarket();
   loadIndustries();
   renderTops();
+  refreshTop3Cloud();
 }
 refreshAll();
 setInterval(refreshAll,60000);
