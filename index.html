@@ -90,6 +90,9 @@ tbody tr:nth-child(even){background:rgba(255,255,255,.02)}
   <div id="srcStatus" style="margin-top:7px;font-size:11px;color:var(--sub);line-height:1.5"></div>
   </header>
 
+  <!-- ①.0 妖股买入信号(连接妖股追踪, 当日有效次日清零, 每换一只颜色红橙黄蓝紫循环) -->
+  <div class="card" id="yaoguBuy" style="display:none"></div>
+
   <!-- ① 大盘概览 -->
   <div class="card">
     <h2>大盘概览 <span class="tag">指数</span></h2>
@@ -501,6 +504,35 @@ function renderTops(){
   TOP3.forEach(function(s){if(s)loadTrend(s.c,"cv"+s.c,"st"+s.c)});
 }
 
+async function refreshYaoguBuy(){
+  /* 妖股追踪买入信号: 60s轮询 raw yaogu_buy.json; 当日有效次日清零; 颜色红橙黄蓝紫循环 */
+  var el=document.getElementById("yaoguBuy");
+  if(!el)return;
+  var d=new Date(),td="";
+  td+=d.getFullYear()+("0"+(d.getMonth()+1)).slice(-2)+("0"+d.getDate()).slice(-2);
+  var colorSet=[
+    {t:"红色",b:"rgba(231,76,60,.18)",c:"#e74c3c"},
+    {t:"橙色",b:"rgba(230,126,34,.18)",c:"#e67e22"},
+    {t:"黄色",b:"rgba(244,194,13,.20)",c:"#b7791f"},
+    {t:"蓝色",b:"rgba(41,128,185,.18)",c:"#2980b9"},
+    {t:"紫色",b:"rgba(142,68,173,.18)",c:"#8e44ad"}
+  ];
+  try{
+    var r=await fetch("https://raw.githubusercontent.com/wxg1979/gushishipan/main/yaogu_buy.json?t="+Date.now());
+    var j=await r.json();
+    if(j&&j.date===td&&j.code){
+      var ci=Math.abs(j.phase||0)%5;
+      var col=colorSet[ci];
+      var px=(j.price!=null&&isFinite(j.price))?'¥'+Number(j.price).toFixed(2):'—';
+      el.style.display="block";
+      el.innerHTML='<h2 style="display:flex;align-items:center;gap:6px"><span style="color:'+col.c+'">📊 妖股出现</span>'+
+        '<span class="tag" style="background:'+col.c+';color:#fff">'+col.t+' · 当日有效</span></h2>'+
+        '<div style="background:'+col.b+';border:1px solid '+col.c+';border-left:6px solid '+col.c+';color:'+col.c+';padding:14px 16px;border-radius:8px;font-size:20px;font-weight:700">'+
+        '妖股出现：<span>'+j.code+'</span> <span>'+j.name+'</span>　买入价 '+px+'</div>';
+    }else{ el.style.display="none"; el.innerHTML=""; }
+  }catch(e){ el.style.display="none"; el.innerHTML=""; }
+}
+
 /* ============ 主循环 ============ */
 window.onerror=function(msg,s,l){var el=document.getElementById("srcStatus");if(el)el.innerHTML+='<span style="color:var(--red)">JS L'+l+':'+msg+'</span>';};
 function setSrc(name,st){var el=document.getElementById("srcStatus");if(el)el.innerHTML+='<span style="margin-right:10px">▪ '+name+'：'+st+'</span>';}
@@ -515,6 +547,7 @@ async function refreshAll(){
   loadIndustries();
   renderTops();
   refreshTop3Cloud();
+  refreshYaoguBuy();
 }
 refreshAll();
 setInterval(refreshAll,60000);
