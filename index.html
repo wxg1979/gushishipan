@@ -463,11 +463,66 @@ function renderSent(){
     ? arr.map(function(x,i){
         var hit=(x.type==="buy");
         return '<tr'+(hit?' style="background:rgba(255,74,112,.16);outline:2px solid var(--red);outline-offset:-2px"':'')+'>'+
-          '<td>'+(hit?'<b style="color:var(--red)">'+x.t+'</b>':x.t)+'</td>'+
-          '<td>'+(hit?'<b style="color:var(--red)">'+x.c+'</b>':x.c)+'</td>'+
-          '<td style="text-align:left;font-weight:600;color:'+(hit?'var(--red)':'inherit')+'">'+(hit?'🔴触及买点 ':'')+x.n+'</td></tr>';
+          '<td>'+(hit?'<b style="color:var(--red);cursor:pointer" onclick="loadSentTrend(\''+x.c+'\',\'cvS'+i+'\',\'stS'+i+'\')">'+x.t+'</b>':x.t)+'</td>'+
+          '<td>'+(hit?'<b style="color:var(--red);cursor:pointer" onclick="loadSentTrend(\''+x.c+'\',\'cvS'+i+'\',\'stS'+i+'\')">'+x.c+'</b>':x.c)+'</td>'+
+          '<td style="text-align:left;font-weight:600;color:'+(hit?'var(--red)':'inherit')+'">'+(hit?'🔴触及买点 ':'')+x.n
+            +(hit?' <span class="sc" style="cursor:pointer" onclick="loadSentTrend(\''+x.c+'\',\'cvS'+i+'\',\'stS'+i+'\')">(点分时)</span>':'')+'</td>'+
+          '<td style="padding:2px;min-width:120px"><canvas id="cvS'+i+'" width="220" height="72"></canvas><div id="stS'+i+'" style="font-size:11px;color:var(--sub);min-height:16px"></div></td></tr>';
       }).join("")
-    : '<tr><td colspan="3" style="color:var(--sub)">今日暂无已发送的推送信号</td></tr>';
+    : '<tr><td colspan="4" style="color:var(--sub)">今日暂无已发送的推送信号</td></tr>';
+  // 自动为首条触及买点信号拉迷你分时
+  for(var k=0;k<arr.length;k++){if(arr[k].type==="buy"){loadSentTrend(arr[k].c,"cvS"+k,"stS"+k);break;}}
+}
+async function loadSentTrend(code,canvasId,statId){
+  /* 今日已发送·迷你分时(独立于Top3评分; 东财→腾讯双回退) */
+  var st=document.getElementById(statId);if(st)st.innerHTML='<span style="color:var(--sub)">分时…</span>';
+  var url="https://push2his.eastmoney.com/api/qt/stock/trends2/get?secid="+secid(code)+"&fields1=f1,f2,f3,f4,f5,f6,f7,f8,f9,f10,f11,f12,f13&fields2=f51,f52,f53,f54,f55,f56,f57,f58&ndays=1&iscr=0";
+  var d=await jp(url);
+  if(d&&d.data&&d.data.trends){
+    var items=(d.data.trends||[]).map(function(s){var a=s.split(',');return {p:+a[2],avg:+a[7],vol:+a[5]}});
+    return renderSentTrend(canvasId,statId,items,d.data.prePrice||0);
+  }
+  var td=await tencentTrend(code);
+  if(td)renderSentTrend(canvasId,statId,td.pts,td.pre);
+  else{var el=document.getElementById(statId);if(el)el.innerHTML='<span style="color:var(--red)">分时无数据</span>';}
+}
+function renderSentTrend(canvasId,statId,items,pre){
+  drawMiniTrend(canvasId,items,pre);
+  var st=document.getElementById(statId);if(!st)return;
+  if(!items||!items.length){st.innerHTML='<span style="color:var(--red)">分时无数据</span>';return}
+  var last=items[items.length-1];var price=last.p,avg=last.avg||price;
+  var chg=pre?((price-pre)/pre*100):NaN;
+  st.innerHTML='<span class="'+cls(chg)+'" style="font-weight:700">'+fmt(price)+'</span> <span class="'+cls(chg)+'">'+(chg>0?"▲+":"")+fmt(chg)+'%</span> · <span class="sc">均价 '+fmt(avg)+'</span>';
+}
+function drawMiniTrend(cv,items,pre){
+  /* 迷你分时(小canvas,宽度自适应,高度固定72) */
+  var c=document.getElementById(cv);if(!c)return;
+  var ctx=c.getContext("2d");ctx.clearRect(0,0,c.width,c.height);
+  if(!items||!items.length)return;
+  var W=c.width=Math.max(180,c.offsetWidth*2),H=c.height=72;
+  var N=items.length,n=Math.max(1,N);
+  var priceH=Math.round(H*0.68),volY0=priceH+6,volY1=H-4;
+  var prices=items.map(function(x){return x.p});
+  var avgs=items.map(function(x){return x.avg||x.p});
+  var vols=items.map(function(x){return x.vol||0});
+  var all=prices.concat(avgs).concat([pre]).filter(function(v){return isFinite(v)&&v>0});
+  if(!all.length)return;
+  var min=Math.min.apply(null,all),max=Math.max.apply(null,all);
+  var pad=2,x0=pad,x1=W-pad,y0=14,y1=priceH,rng=(max-min)||1;
+  var X=function(i){return x0+(x1-x0)*i/(n-1)},Y=function(v){return y1-(y1-y0)*(v-min)/rng};
+  if(pre&&pre>0){ctx.setLineDash([3,3]);ctx.strokeStyle="rgba(255,255,255,.3)";ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(x0,Y(pre));ctx.lineTo(x1,Y(pre));ctx.stroke();ctx.setLineDash([])}
+  ctx.strokeStyle="rgba(31,191,110,.8)";ctx.lineWidth=1;ctx.beginPath();
+  for(var j=0;j<n;j++){j==0?ctx.moveTo(X(j),Y(avgs[j])):ctx.lineTo(X(j),Y(avgs[j]))}ctx.stroke();
+  var lastv=prices[prices.length-1],up=lastv>=(pre||lastv);
+  ctx.strokeStyle=up?"#ff5c76":"#2fd088";ctx.lineWidth=1.6;ctx.beginPath();
+  for(var i=0;i<n;i++){i==0?ctx.moveTo(X(i),Y(prices[i])):ctx.lineTo(X(i),Y(prices[i]))}ctx.stroke();
+  var vmax=Math.max.apply(null,vols)||1,bW=Math.max(1,(x1-x0)/n*0.5);
+  for(var k=0;k<n;k++){var v=vols[k];if(!v)continue;
+    var prev=(k>0)?prices[k-1]:(pre||prices[k]);
+    ctx.fillStyle=(prices[k]>=prev)?"rgba(255,92,118,.6)":"rgba(47,208,136,.6)";
+    var bh=Math.max(1,(volY1-volY0)*(v/vmax));
+    ctx.fillRect(X(k)-bW/2,volY1-bh,bW,bh);
+  }
 }
 async function refreshSentCloud(){
   /* 盘中60s轮询 GitHub raw sent.json(daemon推送时实时维护) → 实时刷新『今日已发送』 */
