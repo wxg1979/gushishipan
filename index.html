@@ -470,11 +470,7 @@ function drawTrend(cv,items,pre){
     ctx.strokeStyle="rgba(255,255,255,.07)";ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(x0,yy);ctx.lineTo(x1,yy);ctx.stroke();
     ctx.fillStyle="#7f94b5";ctx.fillText(fmt(vv),x0-5,yy+3);
   }
-  // 昨收虚线 + 标注
-  if(pre>0&&pre>=min&&pre<=max){
-    ctx.setLineDash([4,4]);ctx.strokeStyle="rgba(255,255,255,.35)";ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(x0,Y(pre));ctx.lineTo(x1,Y(pre));ctx.stroke();ctx.setLineDash([]);
-    ctx.fillStyle="#ffd54a";ctx.textAlign="right";ctx.fillText("昨收 "+fmt(pre),x1-4,Y(pre)-4);
-  }
+  // (2026-10-09用户决定) 不画昨收水平参照虚线: 前一日的收盘价就是今日零轴, 以零轴线为基准; 昨收值仍用于价格线红/绿、量柱涨跌、顶部信息
   // 量柱(独立区, 不与价格线重叠)
   var vmax=Math.max.apply(null,vols)||1,bW=Math.max(1,(x1-x0)/TOTAL*0.55);
   // 量柱区分隔线
@@ -697,7 +693,6 @@ function drawMiniTrend(cv,items,pre){
   // 淡网格
   ctx.strokeStyle="rgba(255,255,255,.06)";ctx.lineWidth=1;
   for(var g=0;g<=4;g++){var gy=Y(min+rng*g/4);ctx.beginPath();ctx.moveTo(x0,gy);ctx.lineTo(x1,gy);ctx.stroke()}
-  if(pre>0&&pre>=min&&pre<=max){ctx.setLineDash([3,3]);ctx.strokeStyle="rgba(255,255,255,.3)";ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(x0,Y(pre));ctx.lineTo(x1,Y(pre));ctx.stroke();ctx.setLineDash([])}
   // 量柱横向对齐四小时(同价格线X)
   var vmax=Math.max.apply(null,vols)||1,bW=Math.max(1,(x1-x0)/TOTAL*0.6);
   for(var k=0;k<n;k++){var v=vols[k];if(!v)continue;
@@ -712,11 +707,7 @@ function drawMiniTrend(cv,items,pre){
   var lastv=prices[prices.length-1],up=lastv>=pre;
   ctx.strokeStyle=up?"#ff5c76":"#2fd088";ctx.lineWidth=1.6;ctx.beginPath();
   for(var i=0;i<n;i++){i==0?ctx.moveTo(X(i),Y(prices[i])):ctx.lineTo(X(i),Y(prices[i]))}ctx.stroke();
-  // 昨收虚线右侧小字(Y值可能贴近顶部, 改画在昨收线右侧较低处, 避免被上边缘截断)
-  if(pre>0&&pre>=min&&pre<=max){
-    ctx.fillStyle="#8aa0c5";ctx.font=Math.max(9,Math.round(W/40))+"px sans-serif";ctx.textAlign="right";
-    ctx.fillText("昨收"+fmt(pre),x1-2,Y(pre)-3);
-  }
+  // (2026-10-09用户决定) 迷你分时也不画昨收线/右侧昨收小字, 以零轴为基准
 }
 var _sentCloudLast="";
 async function refreshSentCloud(){
