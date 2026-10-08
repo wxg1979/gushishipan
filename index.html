@@ -459,19 +459,27 @@ function renderPool(){
 }
 function renderSent(){
   var arr=(QSENT||[]);
-  $("sent").innerHTML=arr.length
-    ? arr.map(function(x,i){
+  // 去重: 同一只股票每天只显示首次发送时间(按code保留t最早), 保持首次出现顺序
+  var byCode={},ord=[];
+  arr.forEach(function(x){ if(!x||!x.c)return;
+    if(!byCode[x.c]){byCode[x.c]=x;ord.push(x.c);}
+    else if(x.t<byCode[x.c].t){byCode[x.c]=x;}
+  });
+  var rows=ord.map(function(c){return byCode[c];});
+  $("sent").innerHTML=rows.length
+    ? rows.map(function(x,i){
         var hit=(x.type==="buy");
         return '<tr>'+
-          '<td>'+(hit?'<b style="color:var(--red);cursor:pointer" onclick="loadSentTrend(\''+x.c+'\',\'cvS'+i+'\',\'stS'+i+'\')">'+x.t+'</b>':x.t)+'</td>'+
-          '<td>'+(hit?'<b style="color:var(--red);cursor:pointer" onclick="loadSentTrend(\''+x.c+'\',\'cvS'+i+'\',\'stS'+i+'\')">'+x.c+'</b>':x.c)+'</td>'+
-          '<td style="text-align:left;font-weight:600;color:'+(hit?'var(--red)':'inherit')+'">'+(hit?'🔴触及买点 ':'')+x.n
-            +(hit?' <span class="sc" style="cursor:pointer" onclick="loadSentTrend(\''+x.c+'\',\'cvS'+i+'\',\'stS'+i+'\')">(点分时)</span>':'')+'</td>'+
+          '<td>'+(hit?'<b style="color:var(--red)">'+x.t+'</b>':x.t)+'</td>'+
+          '<td>'+(hit?'<b style="color:var(--red)">'+x.c+'</b>':x.c)+'</td>'+
+          '<td style="text-align:left;font-weight:600;color:'+(hit?'var(--red)':'inherit')+'">'+(hit?'🔴触及买点 ':'')+x.n+'</td>'+
           '<td style="padding:2px;min-width:120px"><canvas id="cvS'+i+'" width="220" height="72"></canvas><div id="stS'+i+'" style="font-size:11px;color:var(--sub);min-height:16px"></div></td></tr>';
       }).join("")
     : '<tr><td colspan="4" style="color:var(--sub)">今日暂无已发送的推送信号</td></tr>';
-  // 自动为首条触及买点信号拉迷你分时
-  for(var k=0;k<arr.length;k++){if(arr[k].type==="buy"){loadSentTrend(arr[k].c,"cvS"+k,"stS"+k);break;}}
+  // 每一只去重后的股票都自动拉迷你分时(错开0.6s避免并发)
+  for(var k=0;k<rows.length;k++){
+    (function(cid,can){setTimeout(function(){loadSentTrend(cid,"cvS"+can,"stS"+can);},k*600);})(rows[k].c,k);
+  }
 }
 async function loadSentTrend(code,canvasId,statId){
   /* 今日已发送·迷你分时(独立于Top3评分; 东财→腾讯双回退) */
