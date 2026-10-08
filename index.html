@@ -344,11 +344,17 @@ async function loadTrend(code,canvasId,statId){
   var score=qitem?qitem.s:0;
   var bp=qitem?{push:qitem.push,vwap:qitem.vwap,buy_hi:qitem.bph,buy_lo:qitem.bpl}:null;
   // 分时三源: 东财push2his(带超时) → 腾讯web.ifzq带v → 新浪1分钟K (2026-10-08定稿)
-  var urlE="https://push2his.eastmoney.com/api/qt/stock/trends2/get?secid="+secid(code)+"&fields1=f1,f2,f3,f4,f5,f6,f7,f8,f9,f10,f11,f12,f13&fields2=f51,f52,f53,f54,f55,f56,f57,f58&ndays=1&iscr=0";
-  var dE=await jp(urlE);
+  var baseE="https://push2.eastmoney.com/api/qt/stock/trends2/get?secid="+secid(code)+"&fields1=f1,f2,f3,f4,f5,f6,f7,f8,f9,f10,f11,f12,f13&fields2=f51,f52,f53,f54,f55,f56,f57,f58&ndays=1&iscr=0";
+  // 东财 push2 域(2026-10-08: 用户端大盘push2可达, push2his不可达) → push2his次选 → 腾讯/新浪
+  var dE=await jp(baseE);
   if(dE&&dE.data&&dE.data.trends){
     var ei=(dE.data.trends||[]).map(function(s){var a=s.split(',');return {t:a[0],p:+a[2],avg:+a[7],vol:+a[5]}});
     renderTrendData(canvasId,statId,ei,dE.data.prePrice||0,score,bp);return;
+  }
+  var dH=await jp(baseE.replace("push2.","push2his."));
+  if(dH&&dH.data&&dH.data.trends){
+    var ei2=(dH.data.trends||[]).map(function(s){var a=s.split(',');return {t:a[0],p:+a[2],avg:+a[7],vol:+a[5]}});
+    renderTrendData(canvasId,statId,ei2,dH.data.prePrice||0,score,bp);return;
   }
   var td=await tencentTrend(code);
   if(td)renderTrendData(canvasId,statId,td.pts,td.pre,score,bp);
@@ -599,11 +605,17 @@ async function loadSentTrend(code,canvasId,statId){
   /* 今日已发送·迷你分时(独立于Top3评分; 东财→腾讯双回退) */
   var st=document.getElementById(statId);if(st)st.innerHTML='<span style="color:var(--sub)">分时...</span>';
   // 分时三源: 东财push2his(带超时) → 腾讯web.ifzq带v → 新浪1分钟K (2026-10-08定稿)
-  var urlE="https://push2his.eastmoney.com/api/qt/stock/trends2/get?secid="+secid(code)+"&fields1=f1,f2,f3,f4,f5,f6,f7,f8,f9,f10,f11,f12,f13&fields2=f51,f52,f53,f54,f55,f56,f57,f58&ndays=1&iscr=0";
-  var dE=await jp(urlE);
+  var baseE="https://push2.eastmoney.com/api/qt/stock/trends2/get?secid="+secid(code)+"&fields1=f1,f2,f3,f4,f5,f6,f7,f8,f9,f10,f11,f12,f13&fields2=f51,f52,f53,f54,f55,f56,f57,f58&ndays=1&iscr=0";
+  // 东财 push2 域(用户端可达,同大盘) → push2his次选 → 腾讯/新浪
+  var dE=await jp(baseE);
   if(dE&&dE.data&&dE.data.trends){
     var ei=(dE.data.trends||[]).map(function(s){var a=s.split(',');return {t:a[0],p:+a[2],avg:+a[7],vol:+a[5]}});
     renderSentTrend(canvasId,statId,ei,dE.data.prePrice||0);return;
+  }
+  var dH=await jp(baseE.replace("push2.","push2his."));
+  if(dH&&dH.data&&dH.data.trends){
+    var ei2=(dH.data.trends||[]).map(function(s){var a=s.split(',');return {t:a[0],p:+a[2],avg:+a[7],vol:+a[5]}});
+    renderSentTrend(canvasId,statId,ei2,dH.data.prePrice||0);return;
   }
   var td=await tencentTrend(code);
   if(td)renderSentTrend(canvasId,statId,td.pts,td.pre);
