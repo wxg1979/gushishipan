@@ -85,21 +85,21 @@ tbody tr:nth-child(even){background:rgba(255,255,255,.02)}
     <h1><span class="dot"></span>A股行业轮动与资金流向监控</h1>
     <div class="sub">
       <span>申万一级行业 · 每60秒自动刷新</span>
-      <span class="ts">更新：<span id="ts">--</span></span>
+      <span class="ts">更新:<span id="ts">--</span></span>
     </div>
   <div id="srcStatus" style="margin-top:7px;font-size:11px;color:var(--sub);line-height:1.5"></div>
   </header>
 
-  <!-- ①.0 妖股买入信号(连接妖股追踪, 当日有效次日清零, 每换一只颜色红橙黄蓝紫循环) -->
+  <!-- 1.0 妖股买入信号(连接妖股追踪, 当日有效次日清零, 每换一只颜色红橙黄蓝紫循环) -->
   <div class="card" id="yaoguBuy" style="display:none"></div>
 
-  <!-- ① 大盘概览 -->
+  <!-- 1 大盘概览 -->
   <div class="card">
     <h2>大盘概览 <span class="tag">指数</span></h2>
-    <div class="mkt" id="mkt"><div class="mk" style="grid-column:1/-1;color:var(--sub)">加载中…</div></div>
+    <div class="mkt" id="mkt"><div class="mk" style="grid-column:1/-1;color:var(--sub)">加载中...</div></div>
   </div>
 
-  <!-- ①.5 我的持仓·卖出纪律参考 -->
+  <!-- 1.5 我的持仓·卖出纪律参考 -->
   <div class="card">
     <h2>我的持仓 <span class="tag">手动输入·本机保存</span></h2>
     <div class="tbl-scroll">
@@ -112,12 +112,12 @@ tbody tr:nth-child(even){background:rgba(255,255,255,.02)}
     </div>
     <div style="font-size:11px;color:var(--sub);margin-top:6px;line-height:1.6">
       每行填<b>股票代码</b>+<b>买入价</b>(可加<b>买入日</b>)→自动算价并显示名称。<br>
-      1/3止盈=买入价×1.05(卖1/3)；回撤止盈=买入日至今最高价×0.90(跌破清剩余2/3)；止损=买入价×0.95(全部清仓)。<br>
-      数据存本机(localStorage)，当天刷新不丢，次日开盘前自动清空重填。<b>仅供研究参考，不构成投资建议。</b>
+      1/3止盈=买入价×1.05(卖1/3);回撤止盈=买入日至今最高价×0.90(跌破清剩余2/3);止损=买入价×0.95(全部清仓)。<br>
+      数据存本机(localStorage),当天刷新不丢,次日开盘前自动清空重填。<b>仅供研究参考,不构成投资建议。</b>
     </div>
   </div>
 
-  <!-- ② 今日已发送股票 -->
+  <!-- 2 今日已发送股票 -->
   <div class="card">
     <h2>今日已发送股票 <span class="tag">实时推送·放量</span></h2>
     <div class="tbl-scroll">
@@ -128,13 +128,13 @@ tbody tr:nth-child(even){background:rgba(255,255,255,.02)}
     </div>
   </div>
 
-  <!-- ④ 量化选股Top3动态分时 -->
+  <!-- 4 量化选股Top3动态分时 -->
   <div class="card">
     <h2>量化选股 Top3 · 动态分时 <span class="tag">60s更新</span></h2>
     <div class="tops" id="tops"></div>
   </div>
 
-  <!-- ⑤ 量化选股股池 -->
+  <!-- 5 量化选股股池 -->
   <div class="card">
     <h2>量化选股 · 当日股池 <span class="tag">量价策略Top20</span></h2>
     <div class="tbl-scroll">
@@ -145,31 +145,31 @@ tbody tr:nth-child(even){background:rgba(255,255,255,.02)}
     </div>
   </div>
 
-  <!-- ② 申万一级行业涨跌热力网格 -->
+  <!-- 2 申万一级行业涨跌热力网格 -->
   <div class="card">
     <h2>申万一级行业 · 涨跌热力网格 <span class="tag">红涨绿跌</span></h2>
     <div class="heat" id="heat"><div class="err" style="grid-column:1/-1" id="heatErr"></div></div>
     <div class="leg"><span>跌</span><div class="bar"></div><span>涨</span></div>
   </div>
 
-  <!-- ③ 行业主力资金净流入横条 -->
+  <!-- 3 行业主力资金净流入横条 -->
   <div class="card">
     <h2>行业主力资金净流入排行 <span class="tag">双向条形</span></h2>
     <div id="fbar"><div class="err" id="fbarErr"></div></div>
   </div>
 
-  <!-- ⑥ 市场研判 -->
+  <!-- 6 市场研判 -->
   <div class="card">
     <h2>今日市场研判 <span class="tag">自动生成</span></h2>
     <div class="verdict" id="verdict"><div class="err" id="verdictErr"></div></div>
   </div>
 
-  <div class="foot">数据：东方财富(datacenter-web/新浪) + 腾讯实时兜底，每60s刷新 · 行业口径东财行业(近似申万一级)<br>红色=上涨，绿色=下跌，严格遵A股配色 · 仅供参考，不构成投资建议</div>
+  <div class="foot">数据:东方财富(datacenter-web/新浪) + 腾讯实时兜底,每60s刷新 · 行业口径东财行业(近似申万一级)<br>红色=上涨,绿色=下跌,严格遵A股配色 · 仅供参考,不构成投资建议</div>
   <div class="lock" id="lock"></div>
 </div>
 
 <script>
-/* ============ 量化选股策略快照（rethunder-momentum-trader 生成） ============ */
+/* ============ 量化选股策略快照(rethunder-momentum-trader 生成) ============ */
 var QPOOL_DATE = "2026-10-08 量价入池(0只)+每只趋势｜已发送4只";
 var FB_TS="2026-10-02 07:29";
 var FALLBACK_BOARDS=[{"f14":"食品饮料","f3":1.68,"f62":1428075400,"f104":102,"f105":122},{"f14":"家用电器","f3":-0.57,"f62":-48523100,"f104":36,"f105":93},{"f14":"电力设备","f3":0.62,"f62":1199582900,"f104":178,"f105":379},{"f14":"电子","f3":-2.38,"f62":-14242211600,"f104":54,"f105":495},{"f14":"医药生物","f3":2.73,"f62":6024082500,"f104":403,"f105":480},{"f14":"有色金属","f3":0.23,"f62":-614320900,"f104":54,"f105":140},{"f14":"社会服务","f3":-0.28,"f62":-84973600,"f104":30,"f105":82},{"f14":"通信","f3":-0.62,"f62":-721861700,"f104":26,"f105":121},{"f14":"汽车","f3":0.68,"f62":1059998800,"f104":129,"f105":290},{"f14":"建筑材料","f3":-0.05,"f62":-568798100,"f104":35,"f105":72},{"f14":"银行","f3":1.47,"f62":-72136600,"f104":42,"f105":42},{"f14":"计算机","f3":-0.98,"f62":-2718836000,"f104":62,"f105":334},{"f14":"基础化工","f3":0.35,"f62":-1044032900,"f104":197,"f105":412},{"f14":"综合","f3":0.55,"f62":215880100,"f104":10,"f105":20},{"f14":"美容护理","f3":1.7,"f62":282137600,"f104":20,"f105":28},{"f14":"煤炭","f3":0.85,"f62":-89447400,"f104":23,"f105":33},{"f14":"石油石化","f3":0.43,"f62":-506447900,"f104":26,"f105":47},{"f14":"农林牧渔","f3":1.02,"f62":495330600,"f104":72,"f105":103},{"f14":"公用事业","f3":0.73,"f62":32110600,"f104":106,"f105":137},{"f14":"钢铁","f3":1.24,"f62":-20432500,"f104":38,"f105":44},{"f14":"机械设备","f3":-0.9,"f62":-1628906100,"f104":141,"f105":541},{"f14":"轻工制造","f3":0.21,"f62":214762200,"f104":63,"f105":156},{"f14":"交通运输","f3":0.94,"f62":89413300,"f104":86,"f105":126},{"f14":"房地产","f3":0.67,"f62":-570348800,"f104":55,"f105":95},{"f14":"建筑装饰","f3":0.47,"f62":-14773300,"f104":76,"f105":147},{"f14":"环保","f3":0.04,"f62":89150800,"f104":52,"f105":130},{"f14":"商贸零售","f3":0.66,"f62":318912600,"f104":58,"f105":99},{"f14":"非银金融","f3":0.67,"f62":-217879400,"f104":47,"f105":79},{"f14":"国防军工","f3":-0.03,"f62":-492150700,"f104":46,"f105":137},{"f14":"纺织服饰","f3":-0.23,"f62":-184136500,"f104":41,"f105":106},{"f14":"传媒","f3":-0.53,"f62":-1321612700,"f104":35,"f105":130}];
@@ -198,7 +198,7 @@ function posInfo(price){// 4万本金/整手100股/方案A(1/3≈1.3万) B(半�
   var o=[];[["A",40000/3],["B",40000/2]].forEach(function(s){var h=Math.floor(s[1]/(price*100));o.push({sch:s[0],hands:h,amt:h*price*100});});
   return {out:o,can:(price>=15&&price<=60)};
 }
-/* JSONP 封装（带超时，返回 null 表示失败） */
+/* JSONP 封装(带超时,返回 null 表示失败) */
 function jp(url,dontUt){
   return new Promise(function(res){
     if(!dontUt)url=url+(url.indexOf("?")>-1?"&":"?")+"ut="+UT;
@@ -212,7 +212,7 @@ function jp(url,dontUt){
   });
 }
 
-/* ============ ① 大盘（东财 ulist → 失败腾讯 qt.gtimg） ============ */
+/* ============ 1 大盘(东财 ulist → 失败腾讯 qt.gtimg) ============ */
 async function loadMarket(){
   var url="https://push2.eastmoney.com/api/qt/ulist.np/get?fltt=2&invt=2&fields=f2,f3,f6,f12,f14&secids=1.000001,0.399001,0.399006,1.000688";
   var d=await jp(url);
@@ -239,7 +239,7 @@ function renderMkt(diff){
   });
   $("mkt").innerHTML=html||'<div class="err">指数加载失败</div>';
 }
-/* 腾讯大盘：script 加载 qt.gtimg 全局变量 */
+/* 腾讯大盘:script 加载 qt.gtimg 全局变量 */
 function tencentMarket(){
   return new Promise(function(res){
     var codes=["sh000001","sz399001","sz399006","sh000688"];
@@ -257,11 +257,11 @@ function tencentMarket(){
   });
 }
 
-/* ============ ②③⑥ 行业（东财 clist，加ut） ============ */
+/* ============ 236 行业(东财 clist,加ut) ============ */
 var cachedBoards=null;
 async function loadIndustries(){
   var url="https://push2.eastmoney.com/api/qt/clist/get?pn=1&pz=80&po=1&np=1&fltt=2&invt=2&fid=f62&fs=m:90+t:2&fields=f2,f3,f12,f14,f62,f104,f105,f106";
-  // 先立即渲染腾讯兜底(打开即有内容)，东财成功后再替换为实时
+  // 先立即渲染腾讯兜底(打开即有内容),东财成功后再替换为实时
   cachedBoards=(FALLBACK_BOARDS||[]);
   renderHeat(cachedBoards);renderFbar(cachedBoards);renderVerdict(cachedBoards);
   setSrc("行业","腾讯兜底 "+FB_TS);
@@ -299,7 +299,7 @@ function renderFbar(list){
       '<div class="val '+cls(x.v)+'">'+(hasFund?fmtAmt(x.f62):fmt(x.chg)+'%')+'</div></div>';
   });
   $("fbar").innerHTML=(html||'<div style="color:var(--red)">数据加载失败</div>')+
-    (hasFund?'':'<div style="color:var(--sub);font-size:11px;margin-top:6px">⚠️ 主力资金字段未取到，本榜暂按涨跌幅排序</div>');
+    (hasFund?'':'<div style="color:var(--sub);font-size:11px;margin-top:6px">⚠️ 主力资金字段未取到,本榜暂按涨跌幅排序</div>');
 }
 function renderVerdict(list){
   var arr=list.map(function(x){return {n:x.f14,chg:x.f3,f62:x.f62}});
@@ -310,20 +310,20 @@ function renderVerdict(list){
   var out3=(hasFund?fund.slice().reverse().slice(0,3):byChg.slice().reverse().slice(0,3)).reverse();
   var nlist=function(a){return a.map(function(x){return x.n}).join("/")};
   var t2=function(a){return a.map(function(x){return x.n+"<b>"+fmt(x.chg)+"%</b>"}).join("、")};
-  var v1='<div class="vd">💧 <b>'+(hasFund?'资金主线·净流入Top3':'涨幅Top3')+'</b>：'+nlist(in3)+' 领跑，'+
-     (hasFund?'主力合计净流入约 <b>'+fmtAmt(in3.reduce(function(s,x){return s+x.f62},0))+'</b>':'（资金字段缺失，暂按涨幅）')+'。</div>';
-  var v2='<div class="vd">🧭 <b>资金流出压力</b>：<span class="downv">'+nlist(out3)+'</span> 居后，短线谨慎。</div>';
-  var v3='<div class="vd">📈 <b>行情最强</b>：'+t2(byChg.slice(0,3))+'，可结合量价信号顺势参与。</div>';
+  var v1='<div class="vd">💧 <b>'+(hasFund?'资金主线·净流入Top3':'涨幅Top3')+'</b>:'+nlist(in3)+' 领跑,'+
+     (hasFund?'主力合计净流入约 <b>'+fmtAmt(in3.reduce(function(s,x){return s+x.f62},0))+'</b>':'(资金字段缺失,暂按涨幅)')+'。</div>';
+  var v2='<div class="vd">🧭 <b>资金流出压力</b>:<span class="downv">'+nlist(out3)+'</span> 居后,短线谨慎。</div>';
+  var v3='<div class="vd">📈 <b>行情最强</b>:'+t2(byChg.slice(0,3))+',可结合量价信号顺势参与。</div>';
   $("verdict").innerHTML=v1+v2+v3;
 }
 
-/* ============ ④ 量化Top3动态分时（先到先得+动态替换） ============ */
+/* ============ 4 量化Top3动态分时(先到先得+动态替换) ============ */
 var QTOP3 = [{"c":"603906","n":"龙蟠科技","sec":"","s":1.0,"p":20.43,"g":7.3,"st":"等回踩","rank":1,"bph":18.94,"bpl":18.83,"vwap":19.04,"push":19.04,"pos":"1/3","target":22.88,"stop":19.41},{"c":"300073","n":"当升科技","sec":"","s":0.716,"p":41.56,"g":6.89,"st":"等回踩","rank":1,"bph":41.35,"bpl":41.1,"vwap":40.91,"push":41.56,"pos":"1/3","target":46.55,"stop":39.48},{"c":"002709","n":"天赐材料","sec":"","s":0.648,"p":33.0,"g":5.77,"st":"等回踩","rank":1,"bph":32.84,"bpl":32.64,"vwap":32.47,"push":33.0,"pos":"1/3","target":36.96,"stop":31.35}];   /* gen_dashboard 注入: 当日Top3快照(兜底) */
 var TOP3=(QTOP3&&QTOP3.length)?QTOP3:[];
 function tqcode(code){return /^6/.test(code)?"sh"+code:(/^[034]/.test(code)?"sz"+code:("bj"+code));}
 function secid(code){return /^6/.test(code)?"1."+code:"0."+code;}
 async function loadTrend(code,canvasId,statId){
-  var st=document.getElementById(statId);if(st)st.innerHTML='<span style="color:var(--sub)">分时加载中…</span>';
+  var st=document.getElementById(statId);if(st)st.innerHTML='<span style="color:var(--sub)">分时加载中...</span>';
   var qitem=null;TOP3.forEach(function(x){if(x.c===code)qitem=x});
   var score=qitem?qitem.s:0;
   var bp=qitem?{push:qitem.push,vwap:qitem.vwap,buy_hi:qitem.bph,buy_lo:qitem.bpl}:null;
@@ -355,7 +355,7 @@ function renderTrendData(canvasId,statId,items,pre,score,bp){
   var posv=posInfo(price);
   var posHtml=posv&&posv.can
     ? '<b style="color:var(--txt)">方案A 可买 <b style="color:var(--accent)">'+posv.out[0].hands+'手</b>(≈'+(posv.out[0].amt/10000).toFixed(2)+'万) &nbsp;·&nbsp; 方案B '+posv.out[1].hands+'手(≈'+(posv.out[1].amt/10000).toFixed(2)+'万)</b>'
-    : '<b style="color:var(--red)">现价'+fmt(price)+'元不在15-60区间/金额不足整手，建议放弃</b>';
+    : '<b style="color:var(--red)">现价'+fmt(price)+'元不在15-60区间/金额不足整手,建议放弃</b>';
   st.innerHTML=
     '<div style="display:flex;flex-wrap:wrap;align-items:center;gap:8px">'+
       '<span class="px '+cls(chg)+'">'+fmt(price)+'</span>'+
@@ -371,7 +371,7 @@ function renderTrendData(canvasId,statId,items,pre,score,bp){
       '<div class="cell"><span class="lb">建议买(低吸)</span><b style="color:'+bpc+';font-weight:800">'+bpr+'</b></div>'+
       '<div class="cell"><span class="lb">建议卖(目标+8%)</span><b style="color:'+(chase?'var(--red)':'var(--green2)')+'">'+(chase?'⚠️已超目标·勿追':'≥ '+fmt(target))+'</b></div>'+
       '<div class="cell" style="grid-column:1/-1"><span class="lb">止损 -5% / 操作</span><b style="color:var(--red)">'+fmt(stop)+'</b>'+
-      ' <b style="color:'+(hitC?'var(--red)':(chase?'var(--red)':'var(--txt)'))+'">· '+(hitC?'▲已触及买点·回踩到位并企稳，可低吸':(chase?'现价已高于目标位、追高亏损风险大，等回踩':(chg>0?'偏多、回踩低吸':'观望、等企稳')))+'</b></div>'+
+      ' <b style="color:'+(hitC?'var(--red)':(chase?'var(--red)':'var(--txt)'))+'">· '+(hitC?'▲已触及买点·回踩到位并企稳,可低吸':(chase?'现价已高于目标位、追高亏损风险大,等回踩':(chg>0?'偏多、回踩低吸':'观望、等企稳')))+'</b></div>'+
       '<div class="cell" style="grid-column:1/-1;margin-top:-4px"><span class="lb">实盘可选(整手·4万)</span>'+posHtml+'</div>'+
     '</div>'+
     '<div class="conds">'+
@@ -434,7 +434,7 @@ function tencentTrend(code){
     document.head.appendChild(s);
   });
 }
-/* ============ ⑤ 股池表 ============ */
+/* ============ 5 股池表 ============ */
 function trendBadge(t){
   if(!t)return '<span style="color:var(--sub);font-size:11px">-</span>';
   var m={"多头":"var(--green2)","反转":"#4a9eff","观望":"#f0b90b","回避":"var(--red)","-":"var(--sub)"};
@@ -462,7 +462,7 @@ function renderSent(){
   $("sent").innerHTML=arr.length
     ? arr.map(function(x,i){
         var hit=(x.type==="buy");
-        return '<tr'+(hit?' style="background:rgba(255,74,112,.16);outline:2px solid var(--red);outline-offset:-2px"':'')+'>'+
+        return '<tr>'+
           '<td>'+(hit?'<b style="color:var(--red);cursor:pointer" onclick="loadSentTrend(\''+x.c+'\',\'cvS'+i+'\',\'stS'+i+'\')">'+x.t+'</b>':x.t)+'</td>'+
           '<td>'+(hit?'<b style="color:var(--red);cursor:pointer" onclick="loadSentTrend(\''+x.c+'\',\'cvS'+i+'\',\'stS'+i+'\')">'+x.c+'</b>':x.c)+'</td>'+
           '<td style="text-align:left;font-weight:600;color:'+(hit?'var(--red)':'inherit')+'">'+(hit?'🔴触及买点 ':'')+x.n
@@ -475,11 +475,11 @@ function renderSent(){
 }
 async function loadSentTrend(code,canvasId,statId){
   /* 今日已发送·迷你分时(独立于Top3评分; 东财→腾讯双回退) */
-  var st=document.getElementById(statId);if(st)st.innerHTML='<span style="color:var(--sub)">分时…</span>';
+  var st=document.getElementById(statId);if(st)st.innerHTML='<span style="color:var(--sub)">分时...</span>';
   var url="https://push2his.eastmoney.com/api/qt/stock/trends2/get?secid="+secid(code)+"&fields1=f1,f2,f3,f4,f5,f6,f7,f8,f9,f10,f11,f12,f13&fields2=f51,f52,f53,f54,f55,f56,f57,f58&ndays=1&iscr=0";
   var d=await jp(url);
   if(d&&d.data&&d.data.trends){
-    var items=(d.data.trends||[]).map(function(s){var a=s.split(',');return {p:+a[2],avg:+a[7],vol:+a[5]}});
+    var items=(d.data.trends||[]).map(function(s){var a=s.split(',');return {t:a[0],p:+a[2],avg:+a[7],vol:+a[5]}});
     return renderSentTrend(canvasId,statId,items,d.data.prePrice||0);
   }
   var td=await tencentTrend(code);
@@ -495,7 +495,8 @@ function renderSentTrend(canvasId,statId,items,pre){
   st.innerHTML='<span class="'+cls(chg)+'" style="font-weight:700">'+fmt(price)+'</span> <span class="'+cls(chg)+'">'+(chg>0?"▲+":"")+fmt(chg)+'%</span> · <span class="sc">均价 '+fmt(avg)+'</span>';
 }
 function drawMiniTrend(cv,items,pre){
-  /* 迷你分时(小canvas,宽度自适应,高度固定72) */
+  /* 迷你分时(小canvas,宽度自适应,高度固定72)
+     横轴按标准交易日四小时定位: 9:30-11:30 + 13:00-15:00 = 240分钟, 未开盘右侧留白 */
   var c=document.getElementById(cv);if(!c)return;
   var ctx=c.getContext("2d");ctx.clearRect(0,0,c.width,c.height);
   if(!items||!items.length)return;
@@ -508,15 +509,32 @@ function drawMiniTrend(cv,items,pre){
   var all=prices.concat(avgs).concat([pre]).filter(function(v){return isFinite(v)&&v>0});
   if(!all.length)return;
   var min=Math.min.apply(null,all),max=Math.max.apply(null,all);
+  // 交易日四小时分钟定位: 9:30->0, 11:30->120, 13:00->120, 15:00->240
+  function tmin(tstr){
+    if(!tstr)return -1;
+    var m=String(tstr).match(/(\d{2}):(\d{2}):(\d{2})/);
+    if(!m)return -1;
+    var h=+m[1],mi=+m[2];
+    if(h<9&&h>=0)return -1;
+    if(h>=9&&h<13){var v=(h*60+mi)-(9*60+30);return v<0?-1:v;}   // 上午 9:30~11:30 → 0..120
+    if(h>=13&&h<16){return (h*60+mi)-(13*60)+120;}                // 下午 13:00~15:00 → 120..240
+    return -1;
+  }
+  var tm=items.map(function(x){return tmin(x.t)});
+  var hasT=tm[0]>=0;                                              // 有可靠时间戳才按四小时,否则退化为按点分布
+  var TOTAL=240;
   var pad=2,x0=pad,x1=W-pad,y0=14,y1=priceH,rng=(max-min)||1;
-  var X=function(i){return x0+(x1-x0)*i/(n-1)},Y=function(v){return y1-(y1-y0)*(v-min)/rng};
+  function X(i){ var t=hasT?tm[i]:-1;
+    return (hasT&&t>=0)?(x0+(x1-x0)*t/TOTAL):(x0+(x1-x0)*i/(n-1)); }
+  function Y(v){return y1-(y1-y0)*(v-min)/rng}
   if(pre&&pre>0){ctx.setLineDash([3,3]);ctx.strokeStyle="rgba(255,255,255,.3)";ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(x0,Y(pre));ctx.lineTo(x1,Y(pre));ctx.stroke();ctx.setLineDash([])}
+  // 量柱横向对齐四小时(同价格线X)
+  var vmax=Math.max.apply(null,vols)||1,bW=Math.max(1,(x1-x0)/TOTAL*0.6);
   ctx.strokeStyle="rgba(31,191,110,.8)";ctx.lineWidth=1;ctx.beginPath();
   for(var j=0;j<n;j++){j==0?ctx.moveTo(X(j),Y(avgs[j])):ctx.lineTo(X(j),Y(avgs[j]))}ctx.stroke();
   var lastv=prices[prices.length-1],up=lastv>=(pre||lastv);
   ctx.strokeStyle=up?"#ff5c76":"#2fd088";ctx.lineWidth=1.6;ctx.beginPath();
   for(var i=0;i<n;i++){i==0?ctx.moveTo(X(i),Y(prices[i])):ctx.lineTo(X(i),Y(prices[i]))}ctx.stroke();
-  var vmax=Math.max.apply(null,vols)||1,bW=Math.max(1,(x1-x0)/n*0.5);
   for(var k=0;k<n;k++){var v=vols[k];if(!v)continue;
     var prev=(k>0)?prices[k-1]:(pre||prices[k]);
     ctx.fillStyle=(prices[k]>=prev)?"rgba(255,92,118,.6)":"rgba(47,208,136,.6)";
@@ -554,13 +572,13 @@ function renderTops(){
     var bpHtml=hasBp?('低吸 '+s.bpl+'~'+s.bph+' · VWAP '+s.vwap)
         :'买点待放量确认(推送价回撤0.5%~1.1%)';
     return '<div class="chip">'+
-      '<div class="hd"><span class="nm2">'+(i+1)+'. '+s.n+' <span class="sc">'+s.c+' · '+(s.sec||'—')+'</span></span></div>'+
+      '<div class="hd"><span class="nm2">'+(i+1)+'. '+s.n+' <span class="sc">'+s.c+' · '+(s.sec||'-')+'</span></span></div>'+
       '<div style="margin-top:6px;font-size:12px">评分 <b>'+s.s+'</b>'
         +' · <span style="color:'+gColor+'" class="'+((g>0)?'up':'down')+'">'+(g>0?'+':'')+g+'%</span>'
         +' · 现价 ¥'+s.p
         +' · <span style="color:'+stColor+'">'+st+'</span>'
         +' · 仓位 <b>'+s.pos+'</b></div>'+
-      '<div style="margin-top:4px;font-size:12px;color:#7b8aa0">目标 ¥'+(s.target!=null?s.target:'—')+' · 止损 ¥'+(s.stop!=null?s.stop:'—')+'</div>'+
+      '<div style="margin-top:4px;font-size:12px;color:#7b8aa0">目标 ¥'+(s.target!=null?s.target:'-')+' · 止损 ¥'+(s.stop!=null?s.stop:'-')+'</div>'+
       '<div style="margin-top:2px;font-size:11px;color:#7b8aa0">'+bpHtml+'</div>'+
       '<canvas id="cv'+s.c+'"></canvas><div id="st'+s.c+'" style="margin-top:8px"></div></div>';
   }).join("");
@@ -586,19 +604,19 @@ async function refreshYaoguBuy(){
     if(j&&j.date===td&&j.code){
       var ci=Math.abs(j.phase||0)%5;
       var col=colorSet[ci];
-      var px=(j.price!=null&&isFinite(j.price))?'¥'+Number(j.price).toFixed(2):'—';
+      var px=(j.price!=null&&isFinite(j.price))?'¥'+Number(j.price).toFixed(2):'-';
       el.style.display="block";
       el.innerHTML='<h2 style="display:flex;align-items:center;gap:6px"><span style="color:'+col.c+'">📊 妖股出现</span>'+
         '<span class="tag" style="background:'+col.c+';color:#fff">'+col.t+' · 当日有效</span></h2>'+
         '<div style="background:'+col.b+';border:1px solid '+col.c+';border-left:6px solid '+col.c+';color:'+col.c+';padding:14px 16px;border-radius:8px;font-size:20px;font-weight:700">'+
-        '妖股出现：<span>'+j.code+'</span> <span>'+j.name+'</span>　买入价 '+px+'</div>';
+        '妖股出现:<span>'+j.code+'</span> <span>'+j.name+'</span> 买入价 '+px+'</div>';
     }else{ el.style.display="none"; el.innerHTML=""; }
   }catch(e){ el.style.display="none"; el.innerHTML=""; }
 }
 
 /* ============ 主循环 ============ */
 window.onerror=function(msg,s,l){var el=document.getElementById("srcStatus");if(el)el.innerHTML+='<span style="color:var(--red)">JS L'+l+':'+msg+'</span>';};
-function setSrc(name,st){var el=document.getElementById("srcStatus");if(el)el.innerHTML+='<span style="margin-right:10px">▪ '+name+'：'+st+'</span>';}
+function setSrc(name,st){var el=document.getElementById("srcStatus");if(el)el.innerHTML+='<span style="margin-right:10px">▪ '+name+':'+st+'</span>';}
 async function refreshAll(){
   var el=document.getElementById("srcStatus");if(el)el.innerHTML="";
 
