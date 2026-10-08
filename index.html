@@ -46,7 +46,7 @@ h1 .dot{width:9px;height:9px;border-radius:50%;background:var(--accent);display:
 .fbar .rn{color:var(--sub);font-size:11px}
 .fbar .nm{color:var(--txt);font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .fbar .track{background:var(--card2);border-radius:5px;height:13px;position:relative;overflow:hidden}
-.fbar .fill{position:absolute;top:0;bottom:0;border-radius:5px;height:100%}
+.fbar .fill{position:absolute;top:0;bottom:0;left:0;border-radius:5px;height:100%}
 .fbar .val{font-size:12px;font-weight:700;white-space:nowrap}
 /* 分时 */
 .tops{display:grid;grid-template-columns:1fr;gap:10px}
@@ -303,7 +303,7 @@ function renderFbar(list){
   arr.slice(0,22).forEach(function(x,i){
     var pos=x.v>=0, w=Math.round(Math.abs(x.v)/max*100);
     html+='<div class="fbar"><div class="nm" style="text-align:left"><span class="rn">'+(i+1)+'. </span>'+x.n+'</div>'+
-      '<div class="track"><div class="fill" style="'+(pos?'left:50%;background:linear-gradient(90deg,'+RED+','+RED2+');':'right:50%;background:linear-gradient(90deg,'+GREEN2+','+GREEN+');')+'width:'+(w/2)+'%"></div></div>'+
+      '<div class="track"><div class="fill" style="width:'+w+'%;background:'+(pos?'linear-gradient(90deg,'+RED+','+RED2+')':'linear-gradient(90deg,'+GREEN+','+GREEN2+')')+'"></div></div>'+
       '<div class="val '+cls(x.v)+'">'+(hasFund?fmtAmt(x.f62):fmt(x.chg)+'%')+'</div></div>';
   });
   $("fbar").innerHTML=(html||'<div style="color:var(--red)">数据加载失败</div>')+
