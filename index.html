@@ -739,6 +739,12 @@ async function refreshTop3Cloud(){
   }catch(e){}
 }
 
+function tstr(t){
+  if(!t)return '-';
+  if(typeof t==='string')return t;
+  var tt=(t.trend)||'-';
+  return tt==='bull'?'反转':tt==='watch'?'多头':tt==='bear'?'回避':tt;
+}
 var _poolCloudLast="";
 async function refreshPoolCloud(){
   /* 盘中60s轮询 raw pool_live.json(服务端inject_live维护) → 局部更新股池价格/涨跌/趋势,不重建表格(无闪) */
@@ -746,17 +752,17 @@ async function refreshPoolCloud(){
     var r=await fetch("https://raw.githubusercontent.com/wxg1979/gushishipan/main/pool_live.json?t="+Date.now());
     var j=await r.json();
     if(!j||!j.pool||!j.pool.length)return;
-    var _pfs=JSON.stringify(j.pool.map(function(x){return x.c+"@"+x.p+"@"+x.g+"@"+((x.t&&x.t.trend)||"")}));
+    var _pfs=JSON.stringify(j.pool.map(function(x){return x.c+"@"+x.p+"@"+x.g+"@"+tstr(x.t)}));
     if(_pfs===_poolCloudLast)return;
     _poolCloudLast=_pfs;
     j.pool.forEach(function(x){
       var pe=document.getElementById("pool_p_"+x.c);
       var ge=document.getElementById("pool_g_"+x.c);
       var te=document.getElementById("pool_t_"+x.c);
-      for(var k=0;k<QPOOL.length;k++){if(QPOOL[k].c===x.c){QPOOL[k].p=x.p;QPOOL[k].g=x.g;QPOOL[k].t=x.t;break}}
+      for(var k=0;k<QPOOL.length;k++){if(QPOOL[k].c===x.c){QPOOL[k].p=x.p;QPOOL[k].g=x.g;QPOOL[k].t=tstr(x.t);break}}
       if(pe)pe.textContent=fmt(x.p);
       if(ge){ge.textContent=(x.g>0?"+":"")+fmt(x.g)+"%";ge.className=cls(x.g);}
-      if(te)te.innerHTML=trendBadge(x.t);
+      if(te)te.innerHTML=trendBadge(tstr(x.t));
     });
   }catch(e){}
 }
