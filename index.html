@@ -343,7 +343,13 @@ async function loadTrend(code,canvasId,statId){
   var qitem=null;TOP3.forEach(function(x){if(x.c===code)qitem=x});
   var score=qitem?qitem.s:0;
   var bp=qitem?{push:qitem.push,vwap:qitem.vwap,buy_hi:qitem.bph,buy_lo:qitem.bpl}:null;
-  // 2026-10-08 分时走 tencentTrend(新浪1分钟K主源→腾讯分时兜底); 移除东财push2his(TLS断且阻塞)
+  // 分时三源: 东财push2his(带超时) → 腾讯web.ifzq带v → 新浪1分钟K (2026-10-08定稿)
+  var urlE="https://push2his.eastmoney.com/api/qt/stock/trends2/get?secid="+secid(code)+"&fields1=f1,f2,f3,f4,f5,f6,f7,f8,f9,f10,f11,f12,f13&fields2=f51,f52,f53,f54,f55,f56,f57,f58&ndays=1&iscr=0";
+  var dE=await jp(urlE);
+  if(dE&&dE.data&&dE.data.trends){
+    var ei=(dE.data.trends||[]).map(function(s){var a=s.split(',');return {t:a[0],p:+a[2],avg:+a[7],vol:+a[5]}});
+    renderTrendData(canvasId,statId,ei,dE.data.prePrice||0,score,bp);return;
+  }
   var td=await tencentTrend(code);
   if(td)renderTrendData(canvasId,statId,td.pts,td.pre,score,bp);
   else{var stD=document.getElementById(statId);if(stD)stD.innerHTML='<span style="color:var(--red)">分时无数据</span>';}
@@ -494,28 +500,7 @@ function tencentTrend(code){
     }
     (async function(){
       var tq=tqcode(code);
-      // 主源: 新浪1分钟K getKLineData scale=1 (2026-10-08实测最稳; 腾讯web.ifzq高频限流code=-1导致"时好时坏"); 偶发连接重置→自动重试3次
-      var d2=null;
-      for(var rt=0;rt<3;rt++){
-        d2=await jsonpLoad("https://quotes.sina.cn/cn/api/jsonp_v2.php/{CB}=/CN_MarketDataService.getKLineData?symbol="+tq+"&scale=1&ma=no&datalen=300");
-        if(Array.isArray(d2)&&d2.length)break;
-        await new Promise(function(r){setTimeout(r,350)});
-      }
-      if(Array.isArray(d2)&&d2.length){
-        var now=new Date(),ymd=now.getFullYear()+"-"+String(now.getMonth()+1).padStart(2,"0")+"-"+String(now.getDate()).padStart(2,"0");
-        var fi=-1;for(var k2=0;k2<d2.length;k2++){if(d2[k2]&&d2[k2].day&&d2[k2].day.indexOf(ymd)===0){fi=k2;break}}
-        var pre=0;if(fi>0)pre=+d2[fi-1].close;      // 昨收=当日首根前一根close
-        var rows=(fi>=0)?d2.slice(fi):d2;if(!rows.length)rows=d2;
-        var pts=[],cumV=0,cumA=0;
-        for(var kk=0;kk<rows.length;kk++){
-          var x=rows[kk],c=+x.close,amt=+x.amount||0,v=+x.volume||0;
-          cumA+=amt;cumV+=v;
-          pts.push({t:(x.day||"").slice(11,16).replace(":",""),p:c,avg:(cumV>0)?Math.round((cumA/cumV)*100)/100:c,vol:v});
-        }
-        if(!pre||pre<=0)pre=(pts.length?pts[0].p*0.98:0);
-        return res({pts:pts,pre:pre});
-      }
-      // 备选: 腾讯分时(带v=, 提供真实均价线, 但偶发限流)
+      // 源1: 腾讯分时(带v=, 真实均价线; 对高频偶发限流code=-1)  —— 东财是前端第一源, 本函数是东财失败后的兜底
       var d1=await jsonpLoad("https://web.ifzq.gtimg.cn/appstock/app/minute/query?code=***&v="+tq+"&_callback={CB}");
       var node=d1&&d1.data&&d1.data[tq];
       if(node&&node.data&&node.data.data){
@@ -528,6 +513,27 @@ function tencentTrend(code){
         var pre2=node.data.qt?+(node.data.qt[5]||0):0;
         if(!pre2||pre2<=0)pre2=raw2.length?+raw2[0].split(" ")[1]*0.98:0;
         return res({pts:pts2,pre:pre2});
+      }
+      // 源2兜底: 新浪1分钟K getKLineData scale=1 (偶发连接重置→重试3次)
+      var d2=null;
+      for(var rt=0;rt<3;rt++){
+        d2=await jsonpLoad("https://quotes.sina.cn/cn/api/jsonp_v2.php/{CB}=/CN_MarketDataService.getKLineData?symbol="+tq+"&scale=1&ma=no&datalen=300");
+        if(Array.isArray(d2)&&d2.length)break;
+        await new Promise(function(r){setTimeout(r,350)});
+      }
+      if(Array.isArray(d2)&&d2.length){
+        var now=new Date(),ymd=now.getFullYear()+"-"+String(now.getMonth()+1).padStart(2,"0")+"-"+String(now.getDate()).padStart(2,"0");
+        var fi=-1;for(var k2=0;k2<d2.length;k2++){if(d2[k2]&&d2[k2].day&&d2[k2].day.indexOf(ymd)===0){fi=k2;break}}
+        var pre=0;if(fi>0)pre=+d2[fi-1].close;
+        var rows=(fi>=0)?d2.slice(fi):d2;if(!rows.length)rows=d2;
+        var pts=[],cumV=0,cumA=0;
+        for(var kk=0;kk<rows.length;kk++){
+          var x=rows[kk],c=+x.close,amt=+x.amount||0,v=+x.volume||0;
+          cumA+=amt;cumV+=v;
+          pts.push({t:(x.day||"").slice(11,16).replace(":",""),p:c,avg:(cumV>0)?Math.round((cumA/cumV)*100)/100:c,vol:v});
+        }
+        if(!pre||pre<=0)pre=(pts.length?pts[0].p*0.98:0);
+        return res({pts:pts,pre:pre});
       }
       res(null);
     })();
@@ -592,7 +598,13 @@ function renderSent(){
 async function loadSentTrend(code,canvasId,statId){
   /* 今日已发送·迷你分时(独立于Top3评分; 东财→腾讯双回退) */
   var st=document.getElementById(statId);if(st)st.innerHTML='<span style="color:var(--sub)">分时...</span>';
-  // 2026-10-08 分时走 tencentTrend(新浪1分钟K主源→腾讯分时兜底); 移除东财push2his(TLS断且阻塞)
+  // 分时三源: 东财push2his(带超时) → 腾讯web.ifzq带v → 新浪1分钟K (2026-10-08定稿)
+  var urlE="https://push2his.eastmoney.com/api/qt/stock/trends2/get?secid="+secid(code)+"&fields1=f1,f2,f3,f4,f5,f6,f7,f8,f9,f10,f11,f12,f13&fields2=f51,f52,f53,f54,f55,f56,f57,f58&ndays=1&iscr=0";
+  var dE=await jp(urlE);
+  if(dE&&dE.data&&dE.data.trends){
+    var ei=(dE.data.trends||[]).map(function(s){var a=s.split(',');return {t:a[0],p:+a[2],avg:+a[7],vol:+a[5]}});
+    renderSentTrend(canvasId,statId,ei,dE.data.prePrice||0);return;
+  }
   var td=await tencentTrend(code);
   if(td)renderSentTrend(canvasId,statId,td.pts,td.pre);
   else{var el=document.getElementById(statId);if(el)el.innerHTML='<span style="color:var(--red)">分时无数据</span>';}
