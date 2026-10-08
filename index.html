@@ -325,9 +325,15 @@ function secid(code){return /^6/.test(code)?"1."+code:"0."+code;}
 /* 交易日四小时分钟定位: 9:30->0, 11:30->120, 13:00->120, 15:00->240; 无法解析返回-1 */
 function tminOf(tstr){
   if(!tstr)return -1;
-  var m=String(tstr).match(/(\d{1,2}):(\d{2})/);   // 东财a[0]="2026-10-08 10:21"(无秒),腾讯"14:23"
-  if(!m)return -1;
-  var h=+m[1],mi=+m[2];
+  var s=String(tstr).trim();
+  var h,mi;
+  var m=s.match(/(\d{1,2}):(\d{2})/);      // 东财"2026-10-08 10:21" 或 腾讯"14:23"
+  if(m){h=+m[1];mi=+m[2];}
+  else{
+    var m4=s.match(/(\d{4})/);              // 腾讯分时 "0930" 四位 HHMM
+    if(m4){h=+m4[1].slice(0,2);mi=+m4[1].slice(2,4);}
+    else return -1;
+  }
   if(h>=9&&h<13){var v=(h*60+mi)-(9*60+30);return v<0?-1:v;}   // 上午 9:30~11:30 → 0..120
   if(h>=13&&h<16){return (h*60+mi)-(13*60)+120;}                // 下午 13:00~15:00 → 120..240
   return -1;
