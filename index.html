@@ -421,8 +421,10 @@ function drawTrend(cv,items,pre){
   var tm=items.map(function(x){return tminOf(x.t)});
   var hasT=tm.some(function(t){return t>=0});
   var TOTAL=240;
-  var padL=Math.round(W*0.10),padR=Math.round(W*0.02),padT=Math.round(H*0.10),padB=Math.round(H*0.14);
-  var x0=padL,x1=W-padR,y0=padT,y1=H-padB;
+  var padL=Math.round(W*0.10),padR=Math.round(W*0.02),padT=Math.round(H*0.10),padB=Math.round(H*0.16);
+  var priceH=Math.round(H*0.66);   // 价格区底部
+  var x0=padL,x1=W-padR,y0=padT,y1=priceH;
+  var volY0=priceH+2,volY1=H-padB; // 量柱独立区(价格区下方,不重叠)
   function X(i){
     if(!hasT)return x0+(x1-x0)*i/(n-1);
     var t=tm[i];
@@ -446,13 +448,15 @@ function drawTrend(cv,items,pre){
     ctx.setLineDash([4,4]);ctx.strokeStyle="rgba(255,255,255,.35)";ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(x0,Y(pre));ctx.lineTo(x1,Y(pre));ctx.stroke();ctx.setLineDash([]);
     ctx.fillStyle="#ffd54a";ctx.textAlign="right";ctx.fillText("昨收 "+fmt(pre),x1-4,Y(pre)-4);
   }
-  // 量柱(底部)
+  // 量柱(独立区, 不与价格线重叠)
   var vmax=Math.max.apply(null,vols)||1,bW=Math.max(1,(x1-x0)/TOTAL*0.55);
+  // 量柱区分隔线
+  ctx.strokeStyle="rgba(255,255,255,.06)";ctx.beginPath();ctx.moveTo(x0,volY0);ctx.lineTo(x1,volY0);ctx.stroke();
   for(var k=0;k<n;k++){var v=vols[k];if(!v)continue;
     var prev=(k>0)?prices[k-1]:(pre||prices[k]);
     ctx.fillStyle=(prices[k]>=prev)?"rgba(255,92,118,.5)":"rgba(47,208,136,.5)";
-    var bh=(y1-y0)*(v/vmax)*0.5;
-    ctx.fillRect(X(k)-bW/2,y1-bh,bW,bh);
+    var bh=Math.max(1,(volY1-volY0)*(v/vmax));
+    ctx.fillRect(X(k)-bW/2,volY1-bh,bW,bh);
   }
   // 均线(黄色, 清晰)
   ctx.strokeStyle="#ffd54a";ctx.lineWidth=1.4;ctx.beginPath();
@@ -461,17 +465,20 @@ function drawTrend(cv,items,pre){
   var lastv=prices[prices.length-1],up=lastv>=pre;
   ctx.strokeStyle=up?"#ff5c76":"#2fd088";ctx.lineWidth=2;ctx.beginPath();
   for(var i=0;i<n;i++){i==0?ctx.moveTo(X(i),Y(prices[i])):ctx.lineTo(X(i),Y(prices[i]))}ctx.stroke();
-  // 底部图例(右对齐, 不压时间刻度)
-  ctx.fillStyle="#7f94b5";ctx.textAlign="right";ctx.font=Math.round(W/34)+"px sans-serif";
-  ctx.fillText("─ 均价(黄)   ─ 价格",x1-2,y1+Math.round(H*0.05)+8);
-  // 时间刻度(底部)
+  ctx.fillStyle="#7f94b5";ctx.textAlign="right";ctx.font=Math.round(W/32)+"px sans-serif";
+  ctx.fillText("均价(黄) ─ 价格",x1-2,padT-8);
+  // 时间刻度(量柱区下方独立一行)
   ctx.fillStyle="#7f94b5";ctx.textAlign="center";ctx.font=Math.round(W/32)+"px sans-serif";
+  var tlY=volY1+Math.round(H*0.04)+6;
   var tsl=[[9,30,"9:30"],[10,30,"10:30"],[11,30,"11:30"],[13,0,"13:00"],[14,0,"14:00"],[15,0,"15:00"]];
   for(var ti=0;ti<tsl.length;ti++){
     var hh=tsl[ti][0],mm=tsl[ti][1];
     var tt=(hh>=13)?((hh*60+mm)-(13*60)+120):((hh*60+mm)-(9*60+30));
     if(tt<0||tt>TOTAL)continue;
-    ctx.fillText(tsl[ti][2],x0+(x1-x0)*tt/TOTAL,y1+Math.round(H*0.05)+8);
+    // 15:00 处右对齐避免最后一个刻度被右边缘截断
+    if(tt>=TOTAL-1)ctx.textAlign="right";
+    ctx.fillText(tsl[ti][2],(tt>=TOTAL-1)?(x1-2):(x0+(x1-x0)*tt/TOTAL),tlY);
+    ctx.textAlign="center";
   }
   // 顶部信息(昨收/高/低) - 放在padT内不越界
   ctx.fillStyle="#cfe0ff";ctx.textAlign="left";ctx.font=Math.round(W/26)+"px sans-serif";
@@ -552,9 +559,9 @@ function renderSent(){
     ? rows.map(function(x,i){
         var hit=(x.type==="buy");
         return '<tr>'+
-          '<td>'+(hit?'<b style="color:var(--red)">'+x.t+'</b>':x.t)+'</td>'+
-          '<td>'+(hit?'<b style="color:var(--red)">'+x.c+'</b>':x.c)+'</td>'+
-          '<td style="text-align:left;font-weight:600;color:'+(hit?'var(--red)':'inherit')+'">'+(hit?'🔴触及买点 ':'')+x.n+'</td>'+
+          '<td>'+(hit?'<b style="color:var(--accent)">'+x.t+'</b>':x.t)+'</td>'+
+          '<td>'+(hit?'<b style="color:var(--accent)">'+x.c+'</b>':x.c)+'</td>'+
+          '<td style="text-align:left;font-weight:600;color:'+(hit?'var(--accent)':'inherit')+'">'+(hit?'🔵触及买点 ':'')+x.n+'</td>'+
           '<td style="padding:2px;min-width:120px"><canvas id="cvS'+i+'" width="220" height="72"></canvas><div id="stS'+i+'" style="font-size:11px;color:var(--sub);min-height:16px"></div></td></tr>';
       }).join("")
     : '<tr><td colspan="4" style="color:var(--sub)">今日暂无已发送的推送信号</td></tr>';
@@ -637,9 +644,11 @@ function drawMiniTrend(cv,items,pre){
   var lastv=prices[prices.length-1],up=lastv>=pre;
   ctx.strokeStyle=up?"#ff5c76":"#2fd088";ctx.lineWidth=1.6;ctx.beginPath();
   for(var i=0;i<n;i++){i==0?ctx.moveTo(X(i),Y(prices[i])):ctx.lineTo(X(i),Y(prices[i]))}ctx.stroke();
-  // 左上昨收/高低标注(小字放顶部pad内)
-  ctx.fillStyle="#7f94b5";ctx.font=Math.round(W/34)+"px sans-serif";ctx.textAlign="left";
-  ctx.fillText("昨收"+fmt(pre),x0+1,9);
+  // 昨收虚线右侧小字(Y值可能贴近顶部, 改画在昨收线右侧较低处, 避免被上边缘截断)
+  if(pre>0&&pre>=min&&pre<=max){
+    ctx.fillStyle="#8aa0c5";ctx.font=Math.max(9,Math.round(W/40))+"px sans-serif";ctx.textAlign="right";
+    ctx.fillText("昨收"+fmt(pre),x1-2,Y(pre)-3);
+  }
 }
 async function refreshSentCloud(){
   /* 盘中60s轮询 GitHub raw sent.json(daemon推送时实时维护) → 实时刷新『今日已发送』与股池标红 */
