@@ -273,7 +273,11 @@ async function loadIndustries(){
   renderHeat(bs);renderFbar(bs);renderVerdict(bs);
   setSrc("行业","东财·"+bs.length+"板块");
 }
+var _heatSig="";
 function renderHeat(list){
+  var _k=list.map(function(x){return x.f14+":"+x.f3+":"+x.f104+":"+x.f105+":"+x.f106}).join(",");
+  if(_k===_heatSig)return;   // 数据未变不重建(防闪)
+  _heatSig=_k;
   var arr=list.map(function(x){return {n:x.f14,chg:x.f3,code:x.f12,up:x.f104,down:x.f105,zt:x.f106}})
     .filter(function(x){return x.chg!==null&&!isNaN(x.chg)});
   arr.sort(function(a,b){return b.chg-a.chg});
@@ -285,7 +289,11 @@ function renderHeat(list){
       '<div class="fl">'+x.code+'</div></div>';
   }).join("");
 }
+var _fbarSig="";
 function renderFbar(list){
+  var _k=list.map(function(x){return x.f14+":"+x.f3+":"+x.f62}).join(",");
+  if(_k===_fbarSig)return;   // 数据未变不重建(防闪)
+  _fbarSig=_k;
   var arr=list.map(function(x){return {n:x.f14,chg:x.f3,f62:x.f62}});
   var hasFund=arr.some(function(x){return x.f62!==null&&!isNaN(x.f62)});
   arr.forEach(function(x){x.v=(hasFund?(x.f62||0):(x.chg||0))});
@@ -301,7 +309,11 @@ function renderFbar(list){
   $("fbar").innerHTML=(html||'<div style="color:var(--red)">数据加载失败</div>')+
     (hasFund?'':'<div style="color:var(--sub);font-size:11px;margin-top:6px">⚠️ 主力资金字段未取到,本榜暂按涨跌幅排序</div>');
 }
+var _verSig="";
 function renderVerdict(list){
+  var _k=list.map(function(x){return x.f14+":"+x.f3+":"+x.f62}).join(",");
+  if(_k===_verSig)return;   // 数据未变不重建(防闪)
+  _verSig=_k;
   var arr=list.map(function(x){return {n:x.f14,chg:x.f3,f62:x.f62}});
   var hasFund=arr.some(function(x){return x.f62!==null&&!isNaN(x.f62)});
   var byChg=arr.filter(function(x){return x.chg!==null&&!isNaN(x.chg)}).sort(function(a,b){return b.chg-a.chg});
