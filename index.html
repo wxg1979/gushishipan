@@ -421,13 +421,13 @@ function renderTrendData(canvasId,statId,items,pre,score,bp){
       '<span class="cond ok">量价策略入选</span>'+
     '</div>';
 }
-var _trendFinger={};
+var _trendFinger=new WeakMap();
 function trendFinger(items){if(!items||!items.length)return"";var l=items[items.length-1];return items.length+":"+l.t+":"+l.p;}
 function drawTrend(cv,items,pre){
   var c=document.getElementById(cv);if(!c)return;
   var _f=trendFinger(items);
-  if(_trendFinger[cv]===_f)return;   // 数据未变不重绘(防闪烁)
-  _trendFinger[cv]=_f;
+  if(_trendFinger.get(c)==_f)return;   // 同一canvas元素+数据未变才跳过(防闪); DOM重建的新canvas强制重绘
+  _trendFinger.set(c,_f);
   var ctx=c.getContext("2d");
   if(!items||!items.length)return;
   var W=c.width=Math.max(320,c.offsetWidth*2);
