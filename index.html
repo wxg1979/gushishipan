@@ -470,7 +470,7 @@ function drawTrend(cv,items,pre){
   // 时间刻度(量柱区下方独立一行)
   ctx.fillStyle="#7f94b5";ctx.textAlign="center";ctx.font=Math.round(W/32)+"px sans-serif";
   var tlY=volY1+Math.round(H*0.04)+6;
-  var tsl=[[9,30,"9:30"],[10,30,"10:30"],[11,30,"11:30"],[13,0,"13:00"],[14,0,"14:00"],[15,0,"15:00"]];
+  var tsl=[[9,30,"9:30"],[10,30,"10:30"],[11,30,"11:30/13:00"],[14,0,"14:00"],[15,0,"15:00"]];
   for(var ti=0;ti<tsl.length;ti++){
     var hh=tsl[ti][0],mm=tsl[ti][1];
     var tt=(hh>=13)?((hh*60+mm)-(13*60)+120):((hh*60+mm)-(9*60+30));
