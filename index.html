@@ -409,8 +409,13 @@ function renderTrendData(canvasId,statId,items,pre,score,bp){
       '<span class="cond ok">量价策略入选</span>'+
     '</div>';
 }
+var _trendFinger={};
+function trendFinger(items){if(!items||!items.length)return"";var l=items[items.length-1];return items.length+":"+l.t+":"+l.p;}
 function drawTrend(cv,items,pre){
   var c=document.getElementById(cv);if(!c)return;
+  var _f=trendFinger(items);
+  if(_trendFinger[cv]===_f)return;   // 数据未变不重绘(防闪烁)
+  _trendFinger[cv]=_f;
   var ctx=c.getContext("2d");
   if(!items||!items.length)return;
   var W=c.width=Math.max(320,c.offsetWidth*2);
@@ -555,7 +560,11 @@ function trendBadge(t){
   var col=m[t]||"var(--sub)";
   return '<span title="'+t+'" style="display:inline-block;color:'+col+';font-weight:700;border:1px solid '+col+';border-radius:4px;padding:1px 6px;font-size:11px;white-space:nowrap">'+t+'</span>';
 }
+var _poolSig="";
 function renderPool(){
+  var _sig=JSON.stringify((QPOOL||[]).map(function(x){return x&&x.c+"@"+(x.n||"")}));
+  if(_sig===_poolSig)return;   // 股池代码/名称未变不重建(防闪); 价格/涨跌/趋势由refreshPoolCloud局部更新
+  _poolSig=_sig;
   // 只对『今日已推送(sent)』的股票标红加亮, 未推送候选不标红(2026-10-08用户要求)
   var sentSet={};(QSENT||[]).forEach(function(s){if(s&&s.c)sentSet[s.c]=1;});
   $("pool").innerHTML=QPOOL.map(function(x,i){
@@ -573,13 +582,17 @@ function renderPool(){
     return "<tr"+row+"><td>"+(i+1)+"</td><td>"+(hit?'<b style=\"color:var(--red)\">'+x.c+'</b>':x.c)+"</td>"+
       "<td style=\"text-align:left;font-weight:600;color:"+(hit?'var(--red)':'inherit')+"\">"+(hit?'▲':'')+x.n+"</td>"+
       "<td style=\"color:"+scoreColor(x.s)+";font-weight:700\">"+x.s.toFixed(3)+"</td><td>"+x.sec+"</td>"+
-      "<td"+(hit?' style=\"color:var(--red);font-weight:800\"':'')+">"+fmt(x.p)+"</td>"+
-      "<td class=\""+cls(x.g)+"\">"+(x.g>0?"+":"")+fmt(x.g)+"%</td>"+
+      "<td id=\"pool_p_"+x.c+"\""+(hit?' style=\"color:var(--red);font-weight:800\"':'')+">"+fmt(x.p)+"</td>"+
+      "<td id=\"pool_g_"+x.c+"\" class=\""+cls(x.g)+"\">"+(x.g>0?"+":"")+fmt(x.g)+"%</td>"+
       "<td>"+bptxt+"</td>"+
-      "<td>"+trendBadge(x.t)+"</td></tr>";
+      "<td id=\"pool_t_"+x.c+"\">"+trendBadge(x.t)+"</td></tr>";
   }).join("");
 }
+var _sentLast="";
 function renderSent(){
+  var _sig=JSON.stringify((QSENT||[]).map(function(x){return x&&x.c+"@"+x.t}));
+  if(_sig===_sentLast)return;   // 未变化不重建(防闪)
+  _sentLast=_sig;
   var arr=(QSENT||[]);
   // 去重: 同一只股票每天只显示首次发送时间(按code保留t最早), 保持首次出现顺序
   var byCode={},ord=[];
@@ -693,20 +706,46 @@ function drawMiniTrend(cv,items,pre){
     ctx.fillText("昨收"+fmt(pre),x1-2,Y(pre)-3);
   }
 }
+var _sentCloudLast="";
 async function refreshSentCloud(){
   /* 盘中60s轮询 GitHub raw sent.json(daemon推送时实时维护) → 实时刷新『今日已发送』与股池标红 */
   try{
     var r=await fetch("https://raw.githubusercontent.com/wxg1979/gushishipan/main/sent.json?t="+Date.now());
     var j=await r.json();
-    if(Array.isArray(j)){QSENT=j;renderSent();renderPool();}
+    var _fs=JSON.stringify(j);
+    if(Array.isArray(j)&&_fs!==_sentCloudLast){QSENT=j;_sentCloudLast=_fs;renderSent();renderPool();}  // 未变不重建(防闪)
   }catch(e){}
 }
+var _top3Last="";
 async function refreshTop3Cloud(){
   /* 盘中60s轮询 GitHub raw top3.json(daemon先到先得+动态替换实时维护) */
   try{
     var r=await fetch("https://raw.githubusercontent.com/wxg1979/gushishipan/main/top3.json?t="+Date.now());
     var j=await r.json();
-    if(Array.isArray(j)&&j.length){TOP3=j;renderTops();}
+    var _fs=JSON.stringify(j);
+    if(Array.isArray(j)&&j.length&&_fs!==_top3Last){TOP3=j;renderTops();_top3Last=_fs;}  // 数据未变不重建(防闪)
+  }catch(e){}
+}
+
+var _poolCloudLast="";
+async function refreshPoolCloud(){
+  /* 盘中60s轮询 raw pool_live.json(服务端inject_live维护) → 局部更新股池价格/涨跌/趋势,不重建表格(无闪) */
+  try{
+    var r=await fetch("https://raw.githubusercontent.com/wxg1979/gushishipan/main/pool_live.json?t="+Date.now());
+    var j=await r.json();
+    if(!j||!j.pool||!j.pool.length)return;
+    var _pfs=JSON.stringify(j.pool.map(function(x){return x.c+"@"+x.p+"@"+x.g+"@"+((x.t&&x.t.trend)||"")}));
+    if(_pfs===_poolCloudLast)return;
+    _poolCloudLast=_pfs;
+    j.pool.forEach(function(x){
+      var pe=document.getElementById("pool_p_"+x.c);
+      var ge=document.getElementById("pool_g_"+x.c);
+      var te=document.getElementById("pool_t_"+x.c);
+      for(var k=0;k<QPOOL.length;k++){if(QPOOL[k].c===x.c){QPOOL[k].p=x.p;QPOOL[k].g=x.g;QPOOL[k].t=x.t;break}}
+      if(pe)pe.textContent=fmt(x.p);
+      if(ge){ge.textContent=(x.g>0?"+":"")+fmt(x.g)+"%";ge.className=cls(x.g);}
+      if(te)te.innerHTML=trendBadge(x.t);
+    });
   }catch(e){}
 }
 function renderTops(){
@@ -776,6 +815,7 @@ async function refreshAll(){
   renderSent();
   refreshSentCloud();
   renderPool();
+  refreshPoolCloud();
   loadMarket();
   loadIndustries();
   renderTops();
