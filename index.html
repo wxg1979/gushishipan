@@ -55,7 +55,7 @@ h1 .dot{width:9px;height:9px;border-radius:50%;background:var(--accent);display:
 .chip .nm2{font-weight:800;font-size:15px}
 .chip .sc{font-size:11px;color:var(--sub)}
 .chip .px{font-size:18px;font-weight:800;margin-right:8px}
-.chip canvas{width:100%;height:212px;display:block;border-radius:6px;background:#101a2c}
+.chip canvas{width:100%;height:auto;display:block;border-radius:6px;background:#101a2c}
 .kv{font-size:12px}
 .kv .cell{background:rgba(255,255,255,.03);border:1px solid var(--line);border-radius:7px;padding:6px 8px}
 .kv .lb{color:var(--sub);font-size:10.5px;display:block;margin-bottom:1px}
@@ -354,6 +354,8 @@ async function loadTrend(code,canvasId,statId){
   if(td)renderTrendData(canvasId,statId,td.pts,td.pre,score,bp);
 }
 function renderTrendData(canvasId,statId,items,pre,score,bp){
+  // 昨收兜底: pre<=0 时用首条价(接近昨收), 避免昨收0.00/涨跌--%
+  if(!pre||pre<=0)pre=items&&items.length?(items[0].p):0;
   drawTrend(canvasId,items,pre);
   var st=document.getElementById(statId);if(!st)return;
   if(!items||!items.length){st.innerHTML='<span style="color:var(--red)">分时无数据(休市中)</span>';return}
@@ -399,52 +401,81 @@ function renderTrendData(canvasId,statId,items,pre,score,bp){
 }
 function drawTrend(cv,items,pre){
   var c=document.getElementById(cv);if(!c)return;
-  var ctx=c.getContext("2d");ctx.clearRect(0,0,c.width,c.height);
+  var ctx=c.getContext("2d");
   if(!items||!items.length)return;
-  var W=c.width=Math.max(320,c.offsetWidth*2),H=c.height=440;
+  var W=c.width=Math.max(320,c.offsetWidth*2);
+  var H=c.height=Math.round(W*0.52);   // 高度自适应, 与CSS height:auto一致, 避免压扁截断
+  ctx.clearRect(0,0,W,H);
   var N=items.length,n=Math.max(1,N);
-  var priceH=Math.round(H*0.70),volY0=priceH+10,volY1=H-10;
+  // 昨收兜底: pre<=0 时用首条价(接近昨收), 避免显示0.00/--%
+  if(!pre||pre<=0)pre=items[0]?items[0].p:0;
   var prices=items.map(function(x){return x.p});
   var avgs=items.map(function(x){return x.avg||x.p});
   var vols=items.map(function(x){return x.vol||0});
   var all=prices.concat(avgs).concat([pre]).filter(function(v){return isFinite(v)&&v>0});
   if(!all.length)return;
   var min=Math.min.apply(null,all),max=Math.max.apply(null,all);
+  var rng=(max-min)||(pre*0.01)||1;
+  min=Math.max(0,min-rng*0.06);max=max+rng*0.06;rng=(max-min)||1;
   // 交易日四小时分钟定位: 9:30->0, 11:30->120, 13:00->120, 15:00->240
   var tm=items.map(function(x){return tminOf(x.t)});
-  // 只要存在任一有效时间点即按四小时轴定位(东财首条常为9:15/9:25竞价点,不能只看首条否则整体退化铺满)
-  var hasT=tm.some(function(t){return t>=0});                      // 存在任一时间即按四小时轴(不只靠首条,东财首条常为竞价点)
+  var hasT=tm.some(function(t){return t>=0});
   var TOTAL=240;
-  var pad=10,x0=pad,x1=W-pad,y0=20,y1=priceH,rng=(max-min)||1;
-  // 四小时轴固定定位: 有效点按t映射; 无时间点(竞价/盘后)取最近相邻有效点; 最终clamp 0..240
+  var padL=Math.round(W*0.10),padR=Math.round(W*0.02),padT=Math.round(H*0.10),padB=Math.round(H*0.14);
+  var x0=padL,x1=W-padR,y0=padT,y1=H-padB;
   function X(i){
-    if(!hasT)return x0+(x1-x0)*i/(n-1);   // 兜底(实际东财/腾讯均带时间,几乎不会到)
+    if(!hasT)return x0+(x1-x0)*i/(n-1);
     var t=tm[i];
     if(t<0){for(var k=i-1;k>=0;k--){if(tm[k]>=0){t=tm[k];break}}}
     if(t<0){for(var k=i+1;k<n;k++){if(tm[k]>=0){t=tm[k];break}}}
-    if(t<0)t=TOTAL;
-    if(t>TOTAL)t=TOTAL;if(t<0)t=0;
+    if(t<0)t=TOTAL;if(t>TOTAL)t=TOTAL;if(t<0)t=0;
     return x0+(x1-x0)*t/TOTAL;
   }
   function Y(v){return y1-(y1-y0)*(v-min)/rng}
-  ctx.strokeStyle="rgba(255,255,255,.06)";ctx.lineWidth=1;
-  for(var g=0;g<=4;g++){ctx.beginPath();ctx.moveTo(x0,Y(min)+(g/4)*(Y(min)-Y(max)));ctx.lineTo(x1,Y(min)+(g/4)*(Y(min)-Y(max)));ctx.stroke()}
-  if(pre&&pre>0){ctx.setLineDash([4,4]);ctx.strokeStyle="rgba(255,255,255,.3)";ctx.beginPath();ctx.moveTo(x0,Y(pre));ctx.lineTo(x1,Y(pre));ctx.stroke();ctx.setLineDash([])}
-  ctx.strokeStyle="rgba(31,191,110,.7)";ctx.lineWidth=1.3;ctx.beginPath();
-  for(var j=0;j<n;j++){j==0?ctx.moveTo(X(j),Y(avgs[j])):ctx.lineTo(X(j),Y(avgs[j]))}ctx.stroke();
-  var lastv=prices[prices.length-1],up=lastv>=(pre||lastv);
-  ctx.strokeStyle=up?"#ff5c76":"#2fd088";ctx.lineWidth=2;ctx.beginPath();
-  for(var i=0;i<n;i++){i==0?ctx.moveTo(X(i),Y(prices[i])):ctx.lineTo(X(i),Y(prices[i]))}ctx.stroke();
+  // 背景
+  ctx.fillStyle="#0d1626";ctx.fillRect(0,0,W,H);
+  // 网格 + 价格刻度(左)
+  ctx.font=Math.round(W/30)+"px sans-serif";ctx.textAlign="right";
+  for(var g=0;g<=4;g++){
+    var vv=min+rng*g/4,yy=Y(vv);
+    ctx.strokeStyle="rgba(255,255,255,.07)";ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(x0,yy);ctx.lineTo(x1,yy);ctx.stroke();
+    ctx.fillStyle="#7f94b5";ctx.fillText(fmt(vv),x0-5,yy+3);
+  }
+  // 昨收虚线 + 标注
+  if(pre>0&&pre>=min&&pre<=max){
+    ctx.setLineDash([4,4]);ctx.strokeStyle="rgba(255,255,255,.35)";ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(x0,Y(pre));ctx.lineTo(x1,Y(pre));ctx.stroke();ctx.setLineDash([]);
+    ctx.fillStyle="#ffd54a";ctx.textAlign="right";ctx.fillText("昨收 "+fmt(pre),x1-4,Y(pre)-4);
+  }
+  // 量柱(底部)
   var vmax=Math.max.apply(null,vols)||1,bW=Math.max(1,(x1-x0)/TOTAL*0.55);
   for(var k=0;k<n;k++){var v=vols[k];if(!v)continue;
     var prev=(k>0)?prices[k-1]:(pre||prices[k]);
-    ctx.fillStyle=(prices[k]>=prev)?"rgba(255,92,118,.72)":"rgba(47,208,136,.72)";
-    var bh=(volY1-volY0)*(v/vmax);
-    ctx.fillRect(X(k)-bW/2,volY1-bh,bW,bh);
+    ctx.fillStyle=(prices[k]>=prev)?"rgba(255,92,118,.5)":"rgba(47,208,136,.5)";
+    var bh=(y1-y0)*(v/vmax)*0.5;
+    ctx.fillRect(X(k)-bW/2,y1-bh,bW,bh);
   }
-  ctx.fillStyle="#8aa0c5";ctx.font=Math.round(W/24)+"px sans-serif";ctx.textAlign="left";
-  ctx.fillText("昨收 "+fmt(pre)+"  高 "+fmt(max)+"  低 "+fmt(min),x0+2,y0-4);
-  ctx.fillText("量",x0+2,volY1+12);
+  // 均线(黄色, 清晰)
+  ctx.strokeStyle="#ffd54a";ctx.lineWidth=1.4;ctx.beginPath();
+  for(var j=0;j<n;j++){j==0?ctx.moveTo(X(j),Y(avgs[j])):ctx.lineTo(X(j),Y(avgs[j]))}ctx.stroke();
+  // 价格线(红/绿)
+  var lastv=prices[prices.length-1],up=lastv>=pre;
+  ctx.strokeStyle=up?"#ff5c76":"#2fd088";ctx.lineWidth=2;ctx.beginPath();
+  for(var i=0;i<n;i++){i==0?ctx.moveTo(X(i),Y(prices[i])):ctx.lineTo(X(i),Y(prices[i]))}ctx.stroke();
+  // 底部图例(右对齐, 不压时间刻度)
+  ctx.fillStyle="#7f94b5";ctx.textAlign="right";ctx.font=Math.round(W/34)+"px sans-serif";
+  ctx.fillText("─ 均价(黄)   ─ 价格",x1-2,y1+Math.round(H*0.05)+8);
+  // 时间刻度(底部)
+  ctx.fillStyle="#7f94b5";ctx.textAlign="center";ctx.font=Math.round(W/32)+"px sans-serif";
+  var tsl=[[9,30,"9:30"],[10,30,"10:30"],[11,30,"11:30"],[13,0,"13:00"],[14,0,"14:00"],[15,0,"15:00"]];
+  for(var ti=0;ti<tsl.length;ti++){
+    var hh=tsl[ti][0],mm=tsl[ti][1];
+    var tt=(hh>=13)?((hh*60+mm)-(13*60)+120):((hh*60+mm)-(9*60+30));
+    if(tt<0||tt>TOTAL)continue;
+    ctx.fillText(tsl[ti][2],x0+(x1-x0)*tt/TOTAL,y1+Math.round(H*0.05)+8);
+  }
+  // 顶部信息(昨收/高/低) - 放在padT内不越界
+  ctx.fillStyle="#cfe0ff";ctx.textAlign="left";ctx.font=Math.round(W/26)+"px sans-serif";
+  ctx.fillText("昨收 "+fmt(pre)+"   高 "+fmt(max)+"   低 "+fmt(min),x0+2,padT-6);
 }
 function tencentTrend(code){
   return new Promise(function(res){
@@ -456,7 +487,18 @@ function tencentTrend(code){
       var node=d.data[tqcode(code)];
       if(!node||!node.data||!node.data.data)return res(null);
       var pre=node.data.qt?+(node.data.qt[5]||0):0;
-      var pts=node.data.data.map(function(s){var a=s.split(" ");return {t:a[0],p:+a[1],avg:0,vol:+a[2]}});
+      // 腾讯分时每行: "HHMM 价格 累计量(手) 累计额(元)"; 均价线=累计额/(累计量*100), 量柱用逐分钟增量
+      var raw=node.data.data;
+      var pts=[],lastV=0,lastA=0;
+      for(var zi=0;zi<raw.length;zi++){
+        var a=raw[zi].split(" ");
+        var t=a[0],p=+a[1];
+        var cv=+a[2]||0, ca=+(a[3]||0);       // 累计量(手)、累计额(元)
+        var volInc=(cv>=lastV)?(cv-lastV):cv; lastV=cv; lastA=ca;
+        var avg=(cv>0&&ca>0)?(ca/(cv*100)):p;   // 当日加权均价
+        pts.push({t:t,p:p,avg:Math.round(avg*100)/100,vol:Math.max(volInc,0)});
+      }
+      if(!pre||pre<=0)pre=(raw.length>0)?+raw[0].split(" ")[1]*0.98:0;
       res({pts:pts,pre:pre});
     };
     var s=document.createElement("script");s.id=k;
@@ -535,6 +577,7 @@ async function loadSentTrend(code,canvasId,statId){
   else{var el=document.getElementById(statId);if(el)el.innerHTML='<span style="color:var(--red)">分时无数据</span>';}
 }
 function renderSentTrend(canvasId,statId,items,pre){
+  if(!pre||pre<=0)pre=items&&items.length?(items[0].p):0;
   drawMiniTrend(canvasId,items,pre);
   var st=document.getElementById(statId);if(!st)return;
   if(!items||!items.length){st.innerHTML='<span style="color:var(--red)">分时无数据</span>';return}
@@ -548,21 +591,25 @@ function drawMiniTrend(cv,items,pre){
   var c=document.getElementById(cv);if(!c)return;
   var ctx=c.getContext("2d");ctx.clearRect(0,0,c.width,c.height);
   if(!items||!items.length)return;
-  var W=c.width=Math.max(180,c.offsetWidth*2),H=c.height=72;
+  var W=c.width=Math.max(180,c.offsetWidth*2),H=c.height=76;
+  // 昨收兜底
+  if(!pre||pre<=0)pre=items[0]?items[0].p:0;
   var N=items.length,n=Math.max(1,N);
-  var priceH=Math.round(H*0.68),volY0=priceH+6,volY1=H-4;
+  var priceH=Math.round(H*0.70),volY0=priceH+2,volY1=H-6;
   var prices=items.map(function(x){return x.p});
   var avgs=items.map(function(x){return x.avg||x.p});
   var vols=items.map(function(x){return x.vol||0});
   var all=prices.concat(avgs).concat([pre]).filter(function(v){return isFinite(v)&&v>0});
   if(!all.length)return;
   var min=Math.min.apply(null,all),max=Math.max.apply(null,all);
+  var rng0=(max-min)||(pre*0.01)||1;
+  min=Math.max(0,min-rng0*0.06);max=max+rng0*0.06;
+  var rng=(max-min)||1;
   // 交易日四小时分钟定位: 9:30->0, 11:30->120, 13:00->120, 15:00->240
   var tm=items.map(function(x){return tminOf(x.t)});
-  // 存在任一有效时间即按四小时轴定位(东财首条常为9:15/9:25竞价点,不只靠首条,否则整体退化铺满)
   var hasT=tm.some(function(t){return t>=0});
   var TOTAL=240;
-  var pad=2,x0=pad,x1=W-pad,y0=14,y1=priceH,rng=(max-min)||1;
+  var pad=2,x0=pad,x1=W-pad,y0=10,y1=priceH;
   function X(i){   // 四小时轴固定定位; 无时间点(竞价/盘后)取最近相邻有效时间; clamp 0..240
     if(!hasT)return x0+(x1-x0)*i/(n-1);
     var t=tm[i];
@@ -572,20 +619,27 @@ function drawMiniTrend(cv,items,pre){
     return x0+(x1-x0)*t/TOTAL;
   }
   function Y(v){return y1-(y1-y0)*(v-min)/rng}
-  if(pre&&pre>0){ctx.setLineDash([3,3]);ctx.strokeStyle="rgba(255,255,255,.3)";ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(x0,Y(pre));ctx.lineTo(x1,Y(pre));ctx.stroke();ctx.setLineDash([])}
+  // 淡网格
+  ctx.strokeStyle="rgba(255,255,255,.06)";ctx.lineWidth=1;
+  for(var g=0;g<=4;g++){var gy=Y(min+rng*g/4);ctx.beginPath();ctx.moveTo(x0,gy);ctx.lineTo(x1,gy);ctx.stroke()}
+  if(pre>0&&pre>=min&&pre<=max){ctx.setLineDash([3,3]);ctx.strokeStyle="rgba(255,255,255,.3)";ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(x0,Y(pre));ctx.lineTo(x1,Y(pre));ctx.stroke();ctx.setLineDash([])}
   // 量柱横向对齐四小时(同价格线X)
   var vmax=Math.max.apply(null,vols)||1,bW=Math.max(1,(x1-x0)/TOTAL*0.6);
-  ctx.strokeStyle="rgba(31,191,110,.8)";ctx.lineWidth=1;ctx.beginPath();
-  for(var j=0;j<n;j++){j==0?ctx.moveTo(X(j),Y(avgs[j])):ctx.lineTo(X(j),Y(avgs[j]))}ctx.stroke();
-  var lastv=prices[prices.length-1],up=lastv>=(pre||lastv);
-  ctx.strokeStyle=up?"#ff5c76":"#2fd088";ctx.lineWidth=1.6;ctx.beginPath();
-  for(var i=0;i<n;i++){i==0?ctx.moveTo(X(i),Y(prices[i])):ctx.lineTo(X(i),Y(prices[i]))}ctx.stroke();
   for(var k=0;k<n;k++){var v=vols[k];if(!v)continue;
     var prev=(k>0)?prices[k-1]:(pre||prices[k]);
-    ctx.fillStyle=(prices[k]>=prev)?"rgba(255,92,118,.6)":"rgba(47,208,136,.6)";
+    ctx.fillStyle=(prices[k]>=prev)?"rgba(255,92,118,.55)":"rgba(47,208,136,.55)";
     var bh=Math.max(1,(volY1-volY0)*(v/vmax));
     ctx.fillRect(X(k)-bW/2,volY1-bh,bW,bh);
   }
+  // 均线(黄色)
+  ctx.strokeStyle="#ffd54a";ctx.lineWidth=1.2;ctx.beginPath();
+  for(var j=0;j<n;j++){j==0?ctx.moveTo(X(j),Y(avgs[j])):ctx.lineTo(X(j),Y(avgs[j]))}ctx.stroke();
+  var lastv=prices[prices.length-1],up=lastv>=pre;
+  ctx.strokeStyle=up?"#ff5c76":"#2fd088";ctx.lineWidth=1.6;ctx.beginPath();
+  for(var i=0;i<n;i++){i==0?ctx.moveTo(X(i),Y(prices[i])):ctx.lineTo(X(i),Y(prices[i]))}ctx.stroke();
+  // 左上昨收/高低标注(小字放顶部pad内)
+  ctx.fillStyle="#7f94b5";ctx.font=Math.round(W/34)+"px sans-serif";ctx.textAlign="left";
+  ctx.fillText("昨收"+fmt(pre),x0+1,9);
 }
 async function refreshSentCloud(){
   /* 盘中60s轮询 GitHub raw sent.json(daemon推送时实时维护) → 实时刷新『今日已发送』与股池标红 */
