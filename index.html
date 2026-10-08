@@ -557,11 +557,10 @@ function renderSent(){
   var rows=ord.map(function(c){return byCode[c];});
   $("sent").innerHTML=rows.length
     ? rows.map(function(x,i){
-        var hit=(x.type==="buy");
         return '<tr>'+
-          '<td>'+(hit?'<b style="color:var(--accent)">'+x.t+'</b>':x.t)+'</td>'+
-          '<td>'+(hit?'<b style="color:var(--accent)">'+x.c+'</b>':x.c)+'</td>'+
-          '<td style="text-align:left;font-weight:600;color:'+(hit?'var(--accent)':'inherit')+'">'+(hit?'🔵触及买点 ':'')+x.n+'</td>'+
+          '<td style="color:#ffb340">'+x.t+'</td>'+
+          '<td style="color:#ffb340;font-weight:700">'+x.c+'</td>'+
+          '<td style="text-align:left;font-weight:600;color:#ffb340">'+x.n+'</td>'+
           '<td style="padding:2px;min-width:120px"><canvas id="cvS'+i+'" width="220" height="72"></canvas><div id="stS'+i+'" style="font-size:11px;color:var(--sub);min-height:16px"></div></td></tr>';
       }).join("")
     : '<tr><td colspan="4" style="color:var(--sub)">今日暂无已发送的推送信号</td></tr>';
@@ -598,7 +597,7 @@ function drawMiniTrend(cv,items,pre){
   var c=document.getElementById(cv);if(!c)return;
   var ctx=c.getContext("2d");ctx.clearRect(0,0,c.width,c.height);
   if(!items||!items.length)return;
-  var W=c.width=Math.max(180,c.offsetWidth*2),H=c.height=76;
+  var W=c.width=Math.max(180,c.offsetWidth),H=c.height=52;
   // 昨收兜底
   if(!pre||pre<=0)pre=items[0]?items[0].p:0;
   var N=items.length,n=Math.max(1,N);
