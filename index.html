@@ -739,7 +739,11 @@ async function refreshTop3Cloud(){
     var r=await fetchGH("top3.json");
     var j=await r.json();
     var _fs=JSON.stringify(j);
-    if(Array.isArray(j)&&j.length&&_fs!==_top3Last){TOP3=j;renderTops();_top3Last=_fs;}  // 数据未变不重建(防闪)
+    // 2026-10-12: 后端数据为空时, 前端也必须清空对应区块(前后端紧密同步; 杜绝清空日/加载旧页时残留昨数据)
+    if(Array.isArray(j)){
+      if(j.length){ if(_fs!==_top3Last){TOP3=j;renderTops();_top3Last=_fs;} }
+      else { _fs='[]'; if(_top3Last!==_fs){TOP3=[];renderTops();_top3Last=_fs;} }  // 空→回到空态"暂无Top3"
+    }
   }catch(e){}
 }
 
@@ -755,7 +759,9 @@ async function refreshPoolCloud(){
   try{
     var r=await fetchGH("pool_live.json");
     var j=await r.json();
-    if(!j||!j.pool||!j.pool.length)return;
+    if(!j||!Array.isArray(j.pool))return;
+    // 2026-10-12: 后端股池为空时, 前端同步清空表格(前后一致; 避免残留昨日/旧数据)
+    if(!j.pool.length){ if(QPOOL&&QPOOL.length){QPOOL=[];renderPool();} return; }
     var _pfs=JSON.stringify(j.pool.map(function(x){return x.c+"@"+x.p+"@"+x.g+"@"+tstr(x.t)}));
     if(_pfs===_poolCloudLast)return;
     _poolCloudLast=_pfs;
