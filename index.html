@@ -128,18 +128,18 @@ tbody tr:nth-child(even){background:rgba(255,255,255,.02)}
     </div>
   </div>
 
-  <!-- 4 量化选股Top3动态分时 -->
+  <!-- 4 涨停预测Top5动态分时(2026-10-17 第三套选股系统接管) -->
   <div class="card">
-    <h2>量化选股 Top3 · 动态分时 <span class="tag">60s更新</span></h2>
+    <h2>涨停预测 Top5 · 动态分时 <span class="tag">预测涨停率最高5只·60s更新</span></h2>
     <div class="tops" id="tops"></div>
   </div>
 
-  <!-- 5 量化选股股池 -->
+  <!-- 5 涨停预测股池(2026-10-17 替代原量价股池) -->
   <div class="card">
-    <h2>量化选股 · 当日股池 <span class="tag">量价策略Top20</span></h2>
+    <h2>涨停预测 · 当日股池 <span class="tag">第三套选股系统</span></h2>
     <div class="tbl-scroll">
       <table>
-        <thead><tr><th>#</th><th>代码</th><th>名称</th><th>评分</th><th>行业</th><th>现价</th><th>涨跌</th><th>买点</th><th>趋势</th></tr></thead>
+        <thead><tr><th>进入预测时间</th><th>代码</th><th>名称</th><th>评分</th><th>状态</th><th>封板时间</th></tr></thead>
         <tbody id="pool"></tbody>
       </table>
     </div>
@@ -332,7 +332,17 @@ function renderVerdict(list){
 /* ============ 4 量化Top3动态分时(先到先得+动态替换) ============ */
 var QTREND = {};
 var QTOP3 = [];   /* gen_dashboard 注入: 当日Top3快照(兜底) */
-var TOP3=(QTOP3&&QTOP3.length)?QTOP3:[];
+var QPRED = [{"t":"15:39","c":"000995","n":"皇台酒业","s":0.661,"st":"pending","seal":"","prob":null},{"t":"15:39","c":"002265","n":"建设工业","s":0.73,"st":"pending","seal":"","prob":null},{"t":"15:39","c":"300228","n":"富瑞特装","s":0.757,"st":"pending","seal":"","prob":null},{"t":"15:39","c":"300747","n":"锐科激光","s":0.645,"st":"pending","seal":"","prob":null},{"t":"15:39","c":"300893","n":"松原安全","s":0.672,"st":"pending","seal":"","prob":null},{"t":"15:39","c":"300911","n":"亿田智能","s":0.744,"st":"pending","seal":"","prob":null},{"t":"15:39","c":"301091","n":"深城交","s":0.664,"st":"pending","seal":"","prob":null},{"t":"15:39","c":"600252","n":"中恒集团","s":0.714,"st":"pending","seal":"","prob":null},{"t":"17:01","c":"002527","n":"新时达","s":0.661,"st":"pending","seal":"","prob":null},{"t":"17:01","c":"300516","n":"久之洋","s":0.696,"st":"pending","seal":"","prob":null},{"t":"17:01","c":"300995","n":"奇德新材","s":0.681,"st":"pending","seal":"","prob":null},{"t":"17:01","c":"301468","n":"博盈特焊","s":0.707,"st":"pending","seal":"","prob":null},{"t":"17:01","c":"600331","n":"宏达股份","s":0.559,"st":"pending","seal":"","prob":null},{"t":"17:01","c":"600967","n":"内蒙一机","s":0.703,"st":"pending","seal":"","prob":null},{"t":"17:01","c":"688196","n":"卓越新能","s":0.68,"st":"pending","seal":"","prob":null},{"t":"17:01","c":"688339","n":"亿华通","s":0.556,"st":"pending","seal":"","prob":null},{"t":"18:14","c":"000090","n":"天健集团","s":0.732,"st":"pending","seal":"","prob":null},{"t":"18:14","c":"002046","n":"国机精工","s":0.789,"st":"pending","seal":"","prob":null},{"t":"18:14","c":"300025","n":"华星创业","s":0.717,"st":"pending","seal":"","prob":null},{"t":"18:14","c":"300600","n":"国瑞科技","s":0.728,"st":"pending","seal":"","prob":null},{"t":"18:14","c":"300649","n":"杭州园林","s":0.68,"st":"pending","seal":"","prob":null},{"t":"18:14","c":"300779","n":"惠城环保","s":0.664,"st":"pending","seal":"","prob":null},{"t":"18:14","c":"600435","n":"北方导航","s":0.739,"st":"pending","seal":"","prob":null},{"t":"18:14","c":"600585","n":"海螺水泥","s":0.611,"st":"pending","seal":"","prob":null},{"t":"18:14","c":"600869","n":"远东股份","s":0.774,"st":"pending","seal":"","prob":null},{"t":"18:14","c":"603037","n":"凯众股份","s":0.699,"st":"pending","seal":"","prob":null},{"t":"18:14","c":"603085","n":"天成自控","s":0.689,"st":"pending","seal":"","prob":null},{"t":"18:14","c":"605133","n":"嵘泰股份","s":0.677,"st":"pending","seal":"","prob":null},{"t":"18:14","c":"688479","n":"友车科技","s":0.703,"st":"pending","seal":"","prob":null},{"t":"18:14","c":"688660","n":"电气风电","s":0.67,"st":"pending","seal":"","prob":null},{"t":"","c":"000099","n":"中信海直","s":0.0,"st":"miss","seal":"15:39","prob":null},{"t":"","c":"000420","n":"吉林化纤","s":0.0,"st":"miss","seal":"15:39","prob":null},{"t":"","c":"000530","n":"冰山冷热","s":0.0,"st":"miss","seal":"15:39","prob":null},{"t":"","c":"000573","n":"粤宏远Ａ","s":0.0,"st":"miss","seal":"15:39","prob":null},{"t":"","c":"000576","n":"甘化科工","s":0.0,"st":"miss","seal":"15:39","prob":null},{"t":"","c":"000607","n":"华媒控股","s":0.0,"st":"miss","seal":"15:39","prob":null},{"t":"","c":"000678","n":"襄阳轴承","s":0.0,"st":"miss","seal":"15:39","prob":null},{"t":"","c":"000701","n":"厦门信达","s":0.0,"st":"miss","seal":"15:39","prob":null},{"t":"","c":"001319","n":"铭科精技","s":0.0,"st":"miss","seal":"15:39","prob":null},{"t":"","c":"001358","n":"兴欣新材","s":0.0,"st":"miss","seal":"15:39","prob":null},{"t":"","c":"001696","n":"宗申动力","s":0.0,"st":"miss","seal":"15:39","prob":null},{"t":"","c":"002076","n":"星光股份","s":0.0,"st":"miss","seal":"15:39","prob":null},{"t":"","c":"002085","n":"万丰奥威","s":0.0,"st":"miss","seal":"15:39","prob":null},{"t":"","c":"002510","n":"天汽模","s":0.0,"st":"miss","seal":"15:39","prob":null},{"t":"","c":"002535","n":"林州重机","s":0.0,"st":"miss","seal":"15:39","prob":null},{"t":"","c":"002614","n":"奥佳华","s":0.0,"st":"miss","seal":"15:39","prob":null},{"t":"","c":"002683","n":"广东宏大","s":0.0,"st":"miss","seal":"15:39","prob":null},{"t":"","c":"002724","n":"海洋王","s":0.0,"st":"miss","seal":"15:39","prob":null},{"t":"","c":"002767","n":"先锋电子","s":0.0,"st":"miss","seal":"15:39","prob":null},{"t":"","c":"002869","n":"金溢科技","s":0.0,"st":"miss","seal":"15:39","prob":null},{"t":"","c":"002889","n":"东方嘉盛","s":0.0,"st":"miss","seal":"15:39","prob":null},{"t":"","c":"002917","n":"金奥博","s":0.0,"st":"miss","seal":"15:39","prob":null},{"t":"","c":"002933","n":"新兴装备","s":0.0,"st":"miss","seal":"15:39","prob":null},{"t":"","c":"002949","n":"华阳国际","s":0.0,"st":"miss","seal":"15:39","prob":null},{"t":"","c":"003029","n":"吉大正元","s":0.0,"st":"miss","seal":"15:39","prob":null},{"t":"","c":"300045","n":"华力创通","s":0.0,"st":"miss","seal":"15:39","prob":null},{"t":"","c":"300411","n":"金盾股份","s":0.0,"st":"miss","seal":"15:39","prob":null},{"t":"","c":"300581","n":"晨曦航空","s":0.0,"st":"miss","seal":"15:39","prob":null},{"t":"","c":"300681","n":"英搏尔","s":0.0,"st":"miss","seal":"15:39","prob":null},{"t":"","c":"301586","n":"佳力奇","s":0.0,"st":"miss","seal":"15:39","prob":null},{"t":"","c":"600148","n":"长春一东","s":0.0,"st":"miss","seal":"15:39","prob":null},{"t":"","c":"600178","n":"东安动力","s":0.0,"st":"miss","seal":"15:39","prob":null},{"t":"","c":"600319","n":"亚星化学","s":0.0,"st":"miss","seal":"15:39","prob":null},{"t":"","c":"600418","n":"江淮汽车","s":0.0,"st":"miss","seal":"15:39","prob":null},{"t":"","c":"600501","n":"航天晨光","s":0.0,"st":"miss","seal":"15:39","prob":null},{"t":"","c":"600699","n":"均胜电子","s":0.0,"st":"miss","seal":"15:39","prob":null},{"t":"","c":"600802","n":"福建水泥","s":0.0,"st":"miss","seal":"15:39","prob":null},{"t":"","c":"600825","n":"新华传媒","s":0.0,"st":"miss","seal":"15:39","prob":null},{"t":"","c":"600843","n":"上工申贝","s":0.0,"st":"miss","seal":"15:39","prob":null},{"t":"","c":"600860","n":"京城股份","s":0.0,"st":"miss","seal":"15:39","prob":null},{"t":"","c":"601606","n":"长城军工","s":0.0,"st":"miss","seal":"15:39","prob":null},{"t":"","c":"601811","n":"新华文轩","s":0.0,"st":"miss","seal":"15:39","prob":null},{"t":"","c":"601999","n":"出版传媒","s":0.0,"st":"miss","seal":"15:39","prob":null},{"t":"","c":"603013","n":"亚普股份","s":0.0,"st":"miss","seal":"15:39","prob":null},{"t":"","c":"603015","n":"弘讯科技","s":0.0,"st":"miss","seal":"15:39","prob":null},{"t":"","c":"603168","n":"莎普爱思","s":0.0,"st":"miss","seal":"15:39","prob":null},{"t":"","c":"603173","n":"福斯达","s":0.0,"st":"miss","seal":"15:39","prob":null},{"t":"","c":"603197","n":"保隆科技","s":0.0,"st":"miss","seal":"15:39","prob":null},{"t":"","c":"603239","n":"浙江仙通","s":0.0,"st":"miss","seal":"15:39","prob":null},{"t":"","c":"603278","n":"大业股份","s":0.0,"st":"miss","seal":"15:39","prob":null},{"t":"","c":"603305","n":"旭升集团","s":0.0,"st":"miss","seal":"15:39","prob":null},{"t":"","c":"603348","n":"文灿股份","s":0.0,"st":"miss","seal":"15:39","prob":null},{"t":"","c":"603636","n":"南威软件","s":0.0,"st":"miss","seal":"15:39","prob":null},{"t":"","c":"603668","n":"天马科技","s":0.0,"st":"miss","seal":"15:39","prob":null},{"t":"","c":"603955","n":"大千生态","s":0.0,"st":"miss","seal":"15:39","prob":null},{"t":"","c":"603999","n":"读者传媒","s":0.0,"st":"miss","seal":"15:39","prob":null},{"t":"","c":"605178","n":"时空科技","s":0.0,"st":"miss","seal":"15:39","prob":null},{"t":"","c":"688592","n":"司南导航","s":0.0,"st":"miss","seal":"15:39","prob":null}];   /* 2026-10-17 inject_live注入: 涨停预测列表(第三套选股系统) [{t,c,n,s,st,seal,prob}] */
+/* Top5 = 预测列表按 概率prob(优先,样本≥20才有) / 评分score 降序取前5 */
+function predTop5(){
+  var arr=(QPRED||[]).slice();
+  arr.sort(function(a,b){
+    var ka=(a.prob!=null?a.prob:a.s),kb=(b.prob!=null?b.prob:b.s);
+    return kb-ka;
+  });
+  return arr.slice(0,5).map(function(x){return {c:x.c,n:x.n,s:x.s,st:x.st,prob:x.prob,t:x.t};});
+}
+var TOP3=(QPRED&&QPRED.length)?predTop5():((QTOP3&&QTOP3.length)?QTOP3:[]);
 function tqcode(code){return /^6/.test(code)?"sh"+code:(/^[034]/.test(code)?"sz"+code:("bj"+code));}
 function secid(code){return /^6/.test(code)?"1."+code:"0."+code;}
 /* 交易日四小时分钟定位: 9:30->0, 11:30->120, 13:00->120, 15:00->240; 无法解析返回-1 */
@@ -355,8 +365,7 @@ async function loadTrend(code,canvasId,statId){
   var st=document.getElementById(statId);if(st)st.innerHTML='<span style="color:var(--sub)">分时加载中...</span>';
   var qitem=null;TOP3.forEach(function(x){if(x.c===code)qitem=x});
   var score=qitem?qitem.s:0;
-  var bp=qitem?{push:qitem.push,vwap:qitem.vwap,buy_hi:qitem.bph,buy_lo:qitem.bpl}:null;
-  // 2026-10-12: 优先用动态 trend_live(刷新时存到window._trendLive,最新且快),避免QTREND静态快照未覆盖新Top3时走慢跨域→分时无数据(时好时坏)
+  var bp=null;  // 2026-10-17: 涨停预测列表无买点, 分时仅显示价差
   var _tl=window._trendLive&&window._trendLive[code];
   if(_tl&&_tl.pts&&_tl.pts.length){renderTrendData(canvasId,statId,_tl.pts,_tl.pre||0,score,bp);return;}
   var _qt=window.QTREND&&QTREND[code];
@@ -575,30 +584,22 @@ function trendBadge(t){
 }
 var _poolSig="";
 function renderPool(){
-  var _sig=JSON.stringify((QPOOL||[]).map(function(x){return x&&x.c+"@"+(x.n||"")}));
-  if(_sig===_poolSig)return;   // 股池代码/名称未变不重建(防闪); 价格/涨跌/趋势由refreshPoolCloud局部更新
+  // 2026-10-17: 第三套选股系统接管 → 渲染涨停预测列表(6列: 进入预测时间/代码/名称/评分/状态/封板时间)
+  var _sig=JSON.stringify((QPRED||[]).map(function(x){return x&&x.c+"@"+x.st}));
+  if(_sig===_poolSig)return;
   _poolSig=_sig;
-  // 只对『今日已推送(sent)』的股票标红加亮, 未推送候选不标红(2026-10-08用户要求)
-  var sentSet={};(QSENT||[]).forEach(function(s){if(s&&s.c)sentSet[s.c]=1;});
-  $("pool").innerHTML=QPOOL.map(function(x,i){
-    var can=(x.p>=15&&x.p<=60);
-    var bp=x.bp; var hit=!!sentSet[x.c];   // 标红 = 今日已推送, 不依赖 bp.ok
-    var row='';  // 2026-10-08:已推送股票去掉红框红背景,与未推送背景一致;仅保留文字▲已推送标记
-    var bptxt='<span style="color:var(--sub)">--</span>';
-    if(bp&&bp.buy_hi){
-      bptxt='<b style="color:'+(hit?'var(--red)':'var(--accent)')+'">'+fmt(bp.buy_lo)+' ~ '+fmt(bp.buy_hi)+'</b>';
-      if(hit){
-        bptxt+=' <span style="color:var(--red);font-weight:800">▲已推送</span>';
-        if(bp.ok)bptxt+='<span style="color:var(--red);font-weight:800">·触价</span>';
-      }
-    }
-    return "<tr"+row+"><td>"+(i+1)+"</td><td>"+(hit?'<b style=\"color:var(--red)\">'+x.c+'</b>':x.c)+"</td>"+
-      "<td style=\"text-align:left;font-weight:600;color:"+(hit?'var(--red)':'inherit')+"\">"+(hit?'▲':'')+x.n+"</td>"+
-      "<td style=\"color:"+scoreColor(x.s)+";font-weight:700\">"+x.s.toFixed(3)+"</td><td>"+x.sec+"</td>"+
-      "<td id=\"pool_p_"+x.c+"\""+(hit?' style=\"color:var(--red);font-weight:800\"':'')+">"+fmt(x.p)+"</td>"+
-      "<td id=\"pool_g_"+x.c+"\" class=\""+cls(x.g)+"\">"+(x.g>0?"+":"")+fmt(x.g)+"%</td>"+
-      "<td>"+bptxt+"</td>"+
-      "<td id=\"pool_t_"+x.c+"\">"+trendBadge(x.t)+"</td></tr>";
+  var stMap={'hit':['🔴','命中涨停','var(--red)'],'pending':['⚫','预测中','#7b8aa0'],
+             'fail':['⚫','未涨停','var(--sub)'],'miss':['🟡','漏报','#f0b90b']};
+  $("pool").innerHTML=(QPRED||[]).map(function(x){
+    var sv=stMap[x.st]||stMap['pending'];
+    var sc100=(x.s!=null)?(x.s*100).toFixed(1):'-';
+    var probTxt=(x.prob!=null)?(' <b style="color:var(--red)">'+(x.prob*100).toFixed(1)+'%</b>'):"";
+    return "<tr>"+
+      "<td>"+(x.t||'-')+"</td><td>"+x.c+"</td>"+
+      "<td style=\"text-align:left;font-weight:600\">"+x.n+"</td>"+
+      "<td style=\"color:"+scoreColor(x.s||0)+";font-weight:700\">"+sc100+"</td>"+
+      "<td>"+sv[0]+" <span style=\"color:"+sv[2]+"\">"+sv[1]+"</span>"+probTxt+"</td>"+
+      "<td>"+(x.seal||'-')+"</td></tr>";
   }).join("");
 }
 var _sentLast="";
@@ -750,6 +751,21 @@ async function refreshTop3Cloud(){
   }catch(e){}
 }
 
+var _predCloudLast="";
+async function refreshPredictCloud(){
+  /* 2026-10-17: 涨停预测列表由 predict_live.json 驱动(第三套选股系统接管股池+Top5分时) */
+  try{
+    var r=await fetchGH("predict_live.json");
+    var j=await r.json();
+    var _fs=JSON.stringify(j);
+    if(Array.isArray(j)){
+      if(_fs!==_predCloudLast){
+        QPRED=j; TOP3=predTop5(); renderTops(); renderPool(); _predCloudLast=_fs;
+      }
+    }
+  }catch(e){}
+}
+
 function tstr(t){
   if(!t)return '-';
   if(typeof t==='string'){return t==='bull'?'反转':t==='watch'?'多头':t==='bear'?'回避':(t==='none'?'-':t);}
@@ -830,27 +846,22 @@ async function refreshTrendLive(){
   }catch(e){}
 }
 function renderTops(){
+  /* 2026-10-17: 涨停预测Top5(第三套选股系统) · 预测涨停率最高5只动态分时 */
   if(!TOP3||!TOP3.length){
-    $("tops").innerHTML='<div style="color:var(--sub);padding:14px 4px;font-size:13px">暂无Top3入选 · 有达标候选即显示(评分≥0.5 + 排除科创/ST/次新/涨跌停/一字板)</div>';return;
+    $("tops").innerHTML='<div style="color:var(--sub);padding:14px 4px;font-size:13px">暂无预测入选 · 盘中评分达标即显示(情绪档阈值 0.45~0.65)</div>';return;
   }
+  var stMap={'hit':['🔴','命中涨停','var(--red)'],'pending':['⚫','预测中','#7b8aa0'],'fail':['⚫','未涨停','var(--sub)'],'miss':['🟡','漏报','#f0b90b']};
   $("tops").innerHTML=TOP3.map(function(s,i){
     if(!s)return '';
-    var st=s.st||'高位';
-    var stColor=st==='可买'?'var(--red)':(st==='等回踩'?'var(--accent)':'#7b8aa0');
-    var g=Math.round(s.g*10)/10;
-    var gColor=(g>0)?'var(--red)':(g<0?'var(--green)':'var(--sub)');
-    var hasBp=s.bph!=null&&s.bph!=undefined;
-    var bpHtml=hasBp?('低吸 '+s.bpl+'~'+s.bph+' · VWAP '+s.vwap)
-        :'买点待放量确认(推送价回撤0.5%~1.1%)';
+    var sv=stMap[s.st]||stMap['pending'];
+    var sc100=(s.s!=null)?(s.s*100).toFixed(1):'-';
+    var probTxt=(s.prob!=null)?('预测涨停率 <b style="color:var(--red)">'+(s.prob*100).toFixed(1)+'%</b>'):'概率校准积累中';
     return '<div class="chip">'+
-      '<div class="hd"><span class="nm2">'+(i+1)+'. '+s.n+' <span class="sc">'+s.c+' · '+(s.sec||'-')+'</span></span></div>'+
-      '<div style="margin-top:6px;font-size:12px">评分 <b>'+s.s+'</b>'
-        +' · <span style="color:'+gColor+'" class="'+((g>0)?'up':'down')+'">'+(g>0?'+':'')+g+'%</span>'
-        +' · 现价 ¥'+s.p
-        +' · <span style="color:'+stColor+'">'+st+'</span>'
-        +' · 仓位 <b>'+s.pos+'</b></div>'+
-      '<div style="margin-top:4px;font-size:12px;color:#7b8aa0">目标 ¥'+(s.target!=null?s.target:'-')+' · 止损 ¥'+(s.stop!=null?s.stop:'-')+'</div>'+
-      '<div style="margin-top:2px;font-size:11px;color:#7b8aa0">'+bpHtml+'</div>'+
+      '<div class="hd"><span class="nm2">'+(i+1)+'. '+s.n+' <span class="sc">'+s.c+'</span></span></div>'+
+      '<div style="margin-top:6px;font-size:12px">评分 <b style="color:'+scoreColor(s.s||0)+'">'+sc100+'</b>'
+        +' · '+sv[0]+' <span style="color:'+sv[2]+'">'+sv[1]+'</span>'
+        +' · 进入预测 '+(s.t||'-')+'</div>'+
+      '<div style="margin-top:4px;font-size:12px;color:#7b8aa0">'+probTxt+'</div>'+
       '<canvas id="cv'+s.c+'"></canvas><div id="st'+s.c+'" style="margin-top:8px"></div></div>';
   }).join("");
   TOP3.forEach(function(s){if(s)loadTrend(s.c,"cv"+s.c,"st"+s.c)});
@@ -896,11 +907,11 @@ async function refreshAll(){
   renderSent();
   refreshSentCloud();
   renderPool();
-  refreshPoolCloud();
+  refreshPredictCloud();   // 2026-10-17: 涨停预测驱动(替代 refreshPoolCloud)
   loadMarket();
   loadIndustries();
   renderTops();
-  refreshTop3Cloud();
+  // refreshTop3Cloud() 移除: refreshPredictCloud 已含 Top5 分时更新
   refreshTrendLive();
   refreshYaoguBuy();
 }
