@@ -130,7 +130,7 @@ tbody tr:nth-child(even){background:rgba(255,255,255,.02)}
 
   <!-- 4 今日重点推荐Top5·封板概率降序(2026-10-19 替代原涨停预测Top5动态分时) -->
   <div class="card">
-    <h2>今日重点推荐 Top5 · 封板概率降序 <span class="tag">封板概率最高5只·重点买入候选·60s更新</span></h2>
+    <h2>今日精选 Top3 · 低位启动 <span class="tag">精推3只·目标封板率≥80%·60s更新</span></h2>
     <div class="tops" id="tops"></div>
   </div>
 
@@ -755,18 +755,41 @@ async function refreshTop3Cloud(){
 }
 
 var _predCloudLast="";
+var RECO=[];   // 2026-10-23 今日精选Top3(后端精推·低位启动)
 async function refreshPredictCloud(){
-  /* 2026-10-17: 涨停预测列表由 predict_live.json 驱动(第三套选股系统接管股池+Top5分时) */
+  /* predict_live.json: 旧=数组; 2026-10-23起={rows,reco}(含后端精推Top3) */
   try{
     var r=await fetchGH("predict_live.json");
     var j=await r.json();
-    var _fs=JSON.stringify(j);
-    if(Array.isArray(j)){
-      if(_fs!==_predCloudLast){
-        QPRED=j; TOP3=predTop5(); renderTops(); renderPool(); _predCloudLast=_fs;
-      }
+    var _rows=Array.isArray(j)?j:(j.rows||[]);
+    var _reco=Array.isArray(j)?[]:(j.reco||[]);
+    var _sig=JSON.stringify(_rows)+"#"+(Array.isArray(j)?"":JSON.stringify(_reco));
+    if(_sig!==_predCloudLast){
+      QPRED=_rows; TOP3=predTop5(); RECO=_reco;
+      renderReco(); renderPool(); _predCloudLast=_sig;
     }
   }catch(e){}
+}
+
+function renderReco(){
+  /* 2026-10-23 今日精选Top3(后端精推·低位启动·目标封板率≥80%). 无精推时回退原Top5 */
+  var el=$("tops"); if(!el)return;
+  if(!(RECO&&RECO.length)){ renderTops(); return; }
+  var stMap={'hit':['🔴','命中涨停','var(--red)'],'pending':['⚫','预测中','#7b8aa0'],'fail':['⚫','未涨停','var(--sub)']};
+  var qm={}; (QPRED||[]).forEach(function(x){if(x&&x.c)qm[x.c]=x;});
+  el.innerHTML='<div style="color:var(--accent);font-size:12px;margin-bottom:8px">🎯 今日精选 Top3 · 从低位启动(主板&lt;5%/创科&lt;10%) · 目标封板率≥80%</div>'+
+  RECO.slice(0,3).map(function(s,i){
+    if(!s)return '';
+    var q=qm[s.c]||{}; var sv=stMap[q.st]||stMap['pending'];
+    var sc100=(s.prob!=null)?((s.prob*100).toFixed(1)+'%'):((s.score!=null)?((s.score*100).toFixed(1)):((q.s!=null)?(q.s*100).toFixed(1):'-'));
+    var big=(s.prob!=null)?((s.prob*100).toFixed(0)+'%'):((s.score!=null)?((s.score*100).toFixed(0)+'%'):'--');
+    var lb=(s.pct!=null)?('低位启动·现涨'+Number(s.pct).toFixed(2)+'%'):'低位启动';
+    var t=s.pred_time||s.t||'-';
+    return '<div class="chip" style="border-left:5px solid '+(i===0?'var(--red)':'transparent')+'">'+
+      '<div class="hd" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap"><span class="nm2"><b>'+(i+1)+'</b>. '+(s.n||s.name)+' <span class="sc">'+s.c+'</span></span>'+
+      '<span style="margin-left:auto;font-size:22px;font-weight:800;color:var(--red)">'+big+'</span></div>'+
+      '<div style="margin-top:6px;font-size:12px">'+lb+' · '+sv[0]+' <span style="color:'+sv[2]+'">'+sv[1]+'</span> · 进入预测 '+(t||'-')+'</div>'+'</div>';
+  }).join("");
 }
 
 function tstr(t){
@@ -916,7 +939,7 @@ async function refreshAll(){
   refreshPredictCloud();   // 2026-10-17: 涨停预测驱动(替代 refreshPoolCloud)
   loadMarket();
   loadIndustries();
-  renderTops();
+  renderReco();   // 2026-10-23: 今日精选Top3(精推优先; 无精推回退Top5)
   // refreshTop3Cloud() 移除: refreshPredictCloud 已含 Top5 分时更新
   refreshTrendLive();
   refreshYaoguBuy();
