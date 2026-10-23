@@ -780,13 +780,13 @@ function renderReco(){
   el.innerHTML='<div style="color:var(--accent);font-size:12px;margin-bottom:8px">🎯 今日精选 Top3 · 从低位启动(主板&lt;5%/创科&lt;10%) · 目标封板率≥80%</div>'+
   RECO.slice(0,3).map(function(s,i){
     if(!s)return '';
-    var q=qm[s.c]||{}; var sv=stMap[q.st]||stMap['pending'];
+    var q=qm[s.c||s.code]||{}; var sv=stMap[q.st]||stMap['pending'];
     var sc100=(s.prob!=null)?((s.prob*100).toFixed(1)+'%'):((s.score!=null)?((s.score*100).toFixed(1)):((q.s!=null)?(q.s*100).toFixed(1):'-'));
     var big=(s.prob!=null)?((s.prob*100).toFixed(0)+'%'):((s.score!=null)?((s.score*100).toFixed(0)+'%'):'--');
     var lb=(s.pct!=null)?('低位启动·现涨'+Number(s.pct).toFixed(2)+'%'):'低位启动';
     var t=s.pred_time||s.t||'-';
     return '<div class="chip" style="border-left:5px solid '+(i===0?'var(--red)':'transparent')+'">'+
-      '<div class="hd" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap"><span class="nm2"><b>'+(i+1)+'</b>. '+(s.n||s.name)+' <span class="sc">'+s.c+'</span></span>'+
+      '<div class="hd" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap"><span class="nm2"><b>'+(i+1)+'</b>. '+(s.n||s.name)+' <span class="sc">'+(s.c||s.code)+'</span></span>'+
       '<span style="margin-left:auto;font-size:22px;font-weight:800;color:var(--red)">'+big+'</span></div>'+
       '<div style="margin-top:6px;font-size:12px">'+lb+' · '+sv[0]+' <span style="color:'+sv[2]+'">'+sv[1]+'</span> · 进入预测 '+(t||'-')+'</div>'+'</div>';
   }).join("");
